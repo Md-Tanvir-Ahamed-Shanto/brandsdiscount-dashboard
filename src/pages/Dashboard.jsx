@@ -5,6 +5,7 @@ import Overview from '../components/Overview';
 import ProductsList from '../components/ProductList';
 import { generateMockNotifications, generateMockOrders, generateMockProducts } from '../utils/helpers';
 import { CATEGORIES_STRUCTURE } from '../constants';
+import OrdersList from '../components/OrdersList';
 
 const Dashboard = () => {
   const [activeView, setActiveView] = useState('overview');
@@ -22,7 +23,8 @@ const Dashboard = () => {
   useEffect(() => {
     // In a real app, these would be API calls
     const mockProducts = generateMockProducts(50);
-    const mockOrders = generateMockOrders(30);
+    const mockOrders = generateMockOrders(30,products);
+    // console.log("order", mockOrders)
     const mockNotifications = generateMockNotifications(5);
 
     setProducts(mockProducts);
@@ -33,11 +35,27 @@ const Dashboard = () => {
   const handleUpdateProducts = (updatedProducts) => {
     setProducts(updatedProducts);
   };
+  const handleUpdateOrderStatus = (orderId, newStatus) => {
+    setOrders(prevOrders =>
+      prevOrders.map(o => o.id === orderId ? { ...o, status: newStatus } : o)
+    );
+    const order = orders.find(o => o.id === orderId);
+    if (order) {
+        const notification = {
+            id: `notif_order_status_${Date.now()}`, type: 'order_update', title: `Order ${orderId} Status Updated`,
+            message: `Order ${orderId} for ${order.customerName} is now "${newStatus}".`, date: new Date(),
+            read: false, orderId: orderId, severity: 'info'
+        };
+        setNotifications(prev => [notification, ...prev].sort((a,b) => new Date(b.date) - new Date(a.date)).slice(0,50));
+    }
+  };
 
   const renderContent = () => {
     switch (activeView) {
       case 'overview':
-        return <Overview orders={orders} />;
+        return <Overview products={products} orders={orders} currentUser={currentUser} />;
+        case 'orders':
+          return <OrdersList orders={orders} onUpdateOrderStatus={handleUpdateOrderStatus} currentUser={currentUser} />;
       case 'products':
       case 'addProduct':
       case 'editProduct':

@@ -101,8 +101,8 @@ export  const generateMockOrders = (count, products) => {
       let fulfillmentLocation = "N/A";
       for (let j = 0; j < numItems; j++) {
         const productIndex = Math.floor(Math.random() * products?.length || 0);
-        // const product = products[20 + productIndex];
-        const product = null
+        const product = products[20 + productIndex];
+        // const product = null
         if (!product) continue; 
         const quantity = Math.floor(Math.random() * 2) + 1;
         

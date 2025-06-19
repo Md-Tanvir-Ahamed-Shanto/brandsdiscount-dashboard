@@ -1656,7 +1656,8 @@ const App = () => {
   };
 
   const renderView = () => {
-    const userPermissions = PERMISSIONS[currentUser.role] || [];
+    const userPermissions = PERMISSIONS[currentUser?.role] || [];
+    console.log("userpermissions", userPermissions)
     let canAccessCurrentView = userPermissions.includes(activeView);
 
     if (activeView === 'addProduct' && !userPermissions.includes('addProduct')) canAccessCurrentView = false;
