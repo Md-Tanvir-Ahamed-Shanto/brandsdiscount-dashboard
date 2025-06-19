@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-vars */
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Sidebar, GlobalHeader } from "../components/Layout";
 import Overview from "../components/Overview";
 import ProductsList from "../components/ProductList";
@@ -8,9 +8,13 @@ import {
   generateMockOrders,
   generateMockProducts,
 } from "../utils/helpers";
-import { CATEGORIES_STRUCTURE } from "../constants";
+import { CATEGORIES_STRUCTURE, PERMISSIONS } from "../constants";
 import OrdersList from "../components/OrdersList";
 import Categories from "../components/Categories";
+import Inventory from "../components/Inventory";
+import Notifications from "../components/Notifications";
+import Users from "../components/UserList";
+import UsersList from "../components/UserList";
 
 const Dashboard = () => {
   const [activeView, setActiveView] = useState("overview");
@@ -23,6 +27,15 @@ const Dashboard = () => {
     role: "Admin",
     avatar: "https://i.pravatar.cc/150?img=3",
   });
+  const [appUsers, setAppUsers] = useState([
+    { id: 'user_super', username: 'Super Admin User', role: 'Superadmin', password: 'password' },
+    { id: 'user_admin', username: 'Admin User', role: 'Admin', password: 'password' },
+    { id: 'user_lister', username: 'Product Lister User', role: 'ProductLister', password: 'password' },
+    { id: 'user_warehouse', username: 'WarehouseUploader', role: 'WarehouseUploader', password: 'password' }, 
+    { id: 'user_cashier', username: 'Cashier User', role: 'Cashier', password: 'password' },
+    { id: 'user_cust1', username: 'Alice Wonderland', role: 'Customer', password: 'password' },
+    { id: 'user_cust2', username: 'Bob The Builder', role: 'Customer', password: 'password' },
+  ]);
 
   // Mock data loading
   useEffect(() => {
@@ -65,6 +78,15 @@ const Dashboard = () => {
       );
     }
   };
+  const handleAddUser = (newUser) => {
+    setAppUsers(prev => [...prev, newUser]);
+    console.log("New user added (mock):", newUser);
+  };
+
+  const unreadNotificationsCount = useMemo(() => notifications.filter(n => !n.read).length, [notifications]);
+  const handleMarkNotificationAsRead = (id) => setNotifications(prev => prev.map(n => n.id === id ? {...n, read: true} : n));
+  const handleMarkAllAsRead = () => setNotifications(prev => prev.map(n => ({...n, read: true}))); 
+  const handleDeleteNotification = (id) => setNotifications(prev => prev.filter(n => n.id !== id));
 
   const renderContent = () => {
     switch (activeView) {
@@ -86,6 +108,9 @@ const Dashboard = () => {
         );
       case "categories":
         return <Categories categoriesStructure={CATEGORIES_STRUCTURE} />;
+        case 'inventory': return <Inventory currentUser={currentUser} />; 
+        case 'notifications': return <Notifications notifications={notifications} onMarkAsRead={handleMarkNotificationAsRead} onMarkAllAsRead={handleMarkAllAsRead} onDeleteNotification={handleDeleteNotification} />;
+        case 'users': return <UsersList users={appUsers} onAddUser={handleAddUser} currentUser={currentUser} />;
       case "products":
       case "addProduct":
       case "editProduct":
@@ -99,8 +124,14 @@ const Dashboard = () => {
             currentUser={currentUser}
           />
         );
-      default:
-        return <div className="p-4 text-white">Content for {activeView}</div>;
+        case 'settings': return <div className="p-6 text-white">Settings Page (Visible to {(currentUser.role !=='Superadmin') && "Super Admin Only"})</div>;
+        default:
+          return <div className="p-6 text-white text-center">
+              <ShieldAlert size={48} className="mx-auto text-red-500 mb-4"/>
+              <h2 className="text-2xl font-semibold mb-2">Page Not Found</h2>
+              <p>The requested page ({activeView}) could not be found.</p>
+               <button onClick={() => setActiveView(PERMISSIONS[currentUser.role]?.[0] || 'overview')} className="mt-4 px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">Go to Your Dashboard</button>
+          </div>;
     }
   };
 
