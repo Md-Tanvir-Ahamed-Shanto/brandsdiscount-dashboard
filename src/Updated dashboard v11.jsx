@@ -1505,7 +1505,7 @@ const UsersView = ({ users, onAddUser, currentUser }) => {
 };
 
 
-const App = () => {
+const Old = () => {
   const [activeView, setActiveView] = useState('overview');
   const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
@@ -1750,4 +1750,4 @@ const App = () => {
   );
 };
 
-export default App;
+export default Old;
