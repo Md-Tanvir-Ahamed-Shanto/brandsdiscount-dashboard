@@ -1,8 +1,8 @@
 /* eslint-disable no-unused-vars */
 import React, { useState, useEffect } from 'react';
-import { Sidebar, GlobalHeader } from './Layout';
-import Overview from './Overview';
-import ProductsList from './ProductList';
+import { Sidebar, GlobalHeader } from '../components/Layout';
+import Overview from '../components/Overview';
+import ProductsList from '../components/ProductList';
 import { generateMockNotifications, generateMockOrders, generateMockProducts } from '../utils/helpers';
 import { CATEGORIES_STRUCTURE } from '../constants';
 
