@@ -1,29 +1,34 @@
 /* eslint-disable no-unused-vars */
-import React, { useState, useEffect } from 'react';
-import { Sidebar, GlobalHeader } from '../components/Layout';
-import Overview from '../components/Overview';
-import ProductsList from '../components/ProductList';
-import { generateMockNotifications, generateMockOrders, generateMockProducts } from '../utils/helpers';
-import { CATEGORIES_STRUCTURE } from '../constants';
-import OrdersList from '../components/OrdersList';
+import React, { useState, useEffect } from "react";
+import { Sidebar, GlobalHeader } from "../components/Layout";
+import Overview from "../components/Overview";
+import ProductsList from "../components/ProductList";
+import {
+  generateMockNotifications,
+  generateMockOrders,
+  generateMockProducts,
+} from "../utils/helpers";
+import { CATEGORIES_STRUCTURE } from "../constants";
+import OrdersList from "../components/OrdersList";
+import Categories from "../components/Categories";
 
 const Dashboard = () => {
-  const [activeView, setActiveView] = useState('overview');
+  const [activeView, setActiveView] = useState("overview");
   const [currentEditingProductId, setCurrentEditingProductId] = useState(null);
   const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
   const [notifications, setNotifications] = useState([]);
   const [currentUser, setCurrentUser] = useState({
-    name: 'Admin User',
-    role: 'Admin',
-    avatar: 'https://i.pravatar.cc/150?img=3'
+    name: "Admin User",
+    role: "Admin",
+    avatar: "https://i.pravatar.cc/150?img=3",
   });
 
   // Mock data loading
   useEffect(() => {
     // In a real app, these would be API calls
     const mockProducts = generateMockProducts(50);
-    const mockOrders = generateMockOrders(30,products);
+    const mockOrders = generateMockOrders(30, products);
     // console.log("order", mockOrders)
     const mockNotifications = generateMockNotifications(5);
 
@@ -36,29 +41,54 @@ const Dashboard = () => {
     setProducts(updatedProducts);
   };
   const handleUpdateOrderStatus = (orderId, newStatus) => {
-    setOrders(prevOrders =>
-      prevOrders.map(o => o.id === orderId ? { ...o, status: newStatus } : o)
+    setOrders((prevOrders) =>
+      prevOrders.map((o) =>
+        o.id === orderId ? { ...o, status: newStatus } : o
+      )
     );
-    const order = orders.find(o => o.id === orderId);
+    const order = orders.find((o) => o.id === orderId);
     if (order) {
-        const notification = {
-            id: `notif_order_status_${Date.now()}`, type: 'order_update', title: `Order ${orderId} Status Updated`,
-            message: `Order ${orderId} for ${order.customerName} is now "${newStatus}".`, date: new Date(),
-            read: false, orderId: orderId, severity: 'info'
-        };
-        setNotifications(prev => [notification, ...prev].sort((a,b) => new Date(b.date) - new Date(a.date)).slice(0,50));
+      const notification = {
+        id: `notif_order_status_${Date.now()}`,
+        type: "order_update",
+        title: `Order ${orderId} Status Updated`,
+        message: `Order ${orderId} for ${order.customerName} is now "${newStatus}".`,
+        date: new Date(),
+        read: false,
+        orderId: orderId,
+        severity: "info",
+      };
+      setNotifications((prev) =>
+        [notification, ...prev]
+          .sort((a, b) => new Date(b.date) - new Date(a.date))
+          .slice(0, 50)
+      );
     }
   };
 
   const renderContent = () => {
     switch (activeView) {
-      case 'overview':
-        return <Overview products={products} orders={orders} currentUser={currentUser} />;
-        case 'orders':
-          return <OrdersList orders={orders} onUpdateOrderStatus={handleUpdateOrderStatus} currentUser={currentUser} />;
-      case 'products':
-      case 'addProduct':
-      case 'editProduct':
+      case "overview":
+        return (
+          <Overview
+            products={products}
+            orders={orders}
+            currentUser={currentUser}
+          />
+        );
+      case "orders":
+        return (
+          <OrdersList
+            orders={orders}
+            onUpdateOrderStatus={handleUpdateOrderStatus}
+            currentUser={currentUser}
+          />
+        );
+      case "categories":
+        return <Categories categoriesStructure={CATEGORIES_STRUCTURE} />;
+      case "products":
+      case "addProduct":
+      case "editProduct":
         return (
           <ProductsList
             products={products}
