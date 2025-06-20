@@ -19,6 +19,7 @@ import Notifications from "../components/Notifications";
 import UsersList from "../components/UserList";
 import ProductForm from "../components/ProductForm";
 import BarcodeScanner from "../components/BarcodeScanner";
+import apiClient from "../config/api/apiClient";
 
 const Dashboard = () => {
   const [activeView, setActiveView] = useState("overview");
@@ -75,17 +76,26 @@ const Dashboard = () => {
       password: "password",
     },
   ]);
-
+console.log("main product list", products)
   // Mock data loading
   useEffect(() => {
     // In a real app, these would be API calls
-    const mockProducts = generateMockProducts(50);
-    const mockOrders = generateMockOrders(30, products);
+    const fetchedProducts = async ()=>{
+      const response = await apiClient.get("/productroute/products");
+      console.log("response", response)
+
+      setProducts(response?.data?.data);
+    }
+    const fetchedOrders= async ()=>{
+      const response = await apiClient.get("/order");
+      setOrders(response?.data?.data);
+    }
     // console.log("order", mockOrders)
     const mockNotifications = generateMockNotifications(5);
 
-    setProducts(mockProducts);
-    setOrders(mockOrders);
+    // setProducts(mockProducts);
+    fetchedProducts();
+    fetchedOrders();
     setNotifications(mockNotifications);
   }, []);
 
@@ -342,7 +352,6 @@ const Dashboard = () => {
       //     />
       //   );
       case "products":
-      case "editProduct":
         return (
           <ProductsList
             products={products}

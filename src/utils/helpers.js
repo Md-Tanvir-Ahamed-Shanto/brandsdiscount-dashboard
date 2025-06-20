@@ -208,8 +208,12 @@ export const calculateTotalSales = (filteredOrders) => {
 };
 
 export const filterSalesByDate = (orderList, startDate, endDate) => {
-  return orderList.filter(order => {
-    const orderDate = new Date(order.date);
-    return orderDate >= startDate && orderDate <= endDate && order.status === 'Delivered';
-  });
+  console.log("order list", orderList)
+  if(orderList){
+    return orderList?.filter(order => {
+      const orderDate = new Date(order.date);
+      return orderDate >= startDate && orderDate <= endDate && order.status === 'Delivered';
+    });
+  }
+ 
 };

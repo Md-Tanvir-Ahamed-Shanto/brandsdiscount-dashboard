@@ -5,6 +5,7 @@ import { PLATFORMS } from '../constants';
 import { calculateTotalSales, filterSalesByDate } from '../utils/helpers';
 
 const Overview = ({ products, orders }) => {
+  console.log("product",products)
   const now = new Date();
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
   const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);

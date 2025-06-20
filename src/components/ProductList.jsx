@@ -31,7 +31,7 @@ const ProductsList = ({
   const filteredAndSortedProducts = useMemo(() => {
     return initialProducts
       .filter(product => {
-        const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        const matchesSearch = product?.name?.toLowerCase()?.includes(searchTerm.toLowerCase()) ||
           (product.sku && product.sku.toLowerCase().includes(searchTerm.toLowerCase()));
         const matchesCategory = filters.category ? 
           `${product.category.parent} > ${product.category.sub} > ${product.category.type}` === filters.category : true;
@@ -163,7 +163,7 @@ const ProductsList = ({
     }
     return platformNames.length > 0 ? platformNames.join(', ') : (status === 'Active' ? 'Website' : 'None');
   };
-
+console.log("product ",paginatedProducts)
   return (
     <div className="p-4 md:p-6">
       <div className="mb-6 flex flex-col sm:flex-row justify-between items-center gap-4">
@@ -319,18 +319,16 @@ const ProductsList = ({
                 </td>
                 <td className="px-4 py-3 font-medium text-white whitespace-nowrap flex items-center">
                   <ImageWithFallback
-                    src={product.imageUrl}
+                    src={product?.images[1]}
                     fallbackSrc={`https://placehold.co/40x40/777/FFF?text=${product.brand ? product.brand.substring(0, 1) : 'P'}`}
                     alt={product.name}
                     className="w-10 h-10 rounded-md object-cover mr-3"
                   />
                   <div>
-                    <span className="truncate max-w-xs block" title={product.name}>{product.name}</span>
+                    <span className="truncate max-w-xs block">{product.title}</span>
                     <span className="text-xs text-gray-500">
-                      {product.category?.type}
-                      {product.variants && product.variants.length > 0 && (
-                        <span className="text-blue-400">(Has Variants)</span>
-                      )}
+                      {product.category?.name}
+                      
                     </span>
                   </div>
                 </td>
@@ -364,7 +362,7 @@ const ProductsList = ({
                       onClick={() => canEditProducts && (!product.variants || product.variants.length === 0) && setEditingQuantity({ ...editingQuantity, [product.id]: product.quantity })}
                       className={`${canEditProducts && (!product.variants || product.variants.length === 0) ? 'cursor-pointer hover:text-white' : ''} ${product.quantity === 0 ? 'text-red-400 font-semibold' : ''}`}
                     >
-                      {product.quantity}
+                      {product.stockQuantity}
                     </span>
                   )}
                 </td>
