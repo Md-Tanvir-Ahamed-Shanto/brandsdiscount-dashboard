@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Lock, Mail, Store, CreditCard, BarChart3 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import Logo from '../assets/logo/BD Logo Black.png';
 
 function Login() {
   const [credentials, setCredentials] = useState({
@@ -40,8 +41,8 @@ function Login() {
     <div className="relative z-10 w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-white/10 backdrop-blur-lg rounded-2xl mb-4 border border-white/20">
-            <Store className="w-8 h-8 text-white" />
+          <div className="inline-flex items-center justify-center w-96 h-24 bg-white/10 backdrop-blur-lg rounded-2xl mb-4 border border-white/20">
+            <img src={Logo} className="w-60 h-14 text-white" />
           </div>
           <h1 className="text-3xl font-bold text-white mb-2">POS Dashboard</h1>
           <p className="text-blue-200">Access your point of sale system</p>
