@@ -73,10 +73,13 @@ export const SIZE_TYPES = ['XXS (00)', 'XS (0-2)', 'S (4-6)', 'M (8-10)', 'L (12
 export const USER_ROLES = ['Superadmin', 'Admin', 'Cashier', 'WarehouseUploader', 'ProductLister', 'Customer'];
 
 export const PERMISSIONS = {
-  Superadmin: ['overview', 'products', 'orders', 'categories', 'inventory', 'notifications', 'users', 'settings', 'addProduct', 'editProduct'],
-  Admin: ['overview', 'products', 'orders', 'categories', 'inventory', 'notifications', 'users', 'settings', 'addProduct', 'editProduct'],
+  Superadmin: ['overview', 'products', 'orders', 'categories', 'inventory', 'notifications', 'users', 'settings', 'addProduct', 'editProduct','update_order_status','delete_order','send_customer_email'],
+  Admin: ['overview', 'products', 'orders', 'categories', 'inventory', 'notifications', 'users', 'settings', 'addProduct', 'editProduct','update_order_status','delete_order','send_customer_email'],
   Cashier: ['inventory'],
   WarehouseUploader: ['addProduct'],
   ProductLister: ['products', 'addProduct', 'editProduct', 'categories'],
   Customer: [],
+  update_order_status: ['Admin', 'Superadmin'],
+  delete_order: ['Admin', 'Superadmin'],
+  send_customer_email: ['Admin', 'Superadmin'],
 };

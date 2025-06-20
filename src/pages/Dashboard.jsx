@@ -18,6 +18,7 @@ import ProductForm from "../components/ProductForm";
 import BarcodeScanner from "../components/BarcodeScanner";
 import { apiClient } from "../config/api/api";
 import ProductManagementPage from "../components/ProductManagementPage";
+import OrderListPage from "../components/OrderListPage";
 
 const Dashboard = () => {
   const [activeView, setActiveView] = useState("overview");
@@ -313,10 +314,8 @@ console.log("main product list", products)
         );
       case "orders":
         return (
-          <OrdersList
-            orders={orders}
-            onUpdateOrderStatus={handleUpdateOrderStatus}
-            currentUser={currentUser}
+          <
+            OrderListPage
           />
         );
       case "categories":

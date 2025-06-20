@@ -6,6 +6,7 @@ import Old from "./Updated dashboard v11";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { AuthProvider } from "./provider/AuthProvider";
 import ProductManagementPage from "./components/ProductManagementPage";
+import OrderListPage from "./components/OrderListPage";
 
 function App() {
   return (
