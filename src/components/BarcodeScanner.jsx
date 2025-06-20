@@ -1,37 +1,62 @@
+// SOLUTION 1: Use CDN-based approach (Recommended)
+// This avoids bundler issues entirely
+
 import React, { useEffect, useState } from "react"
-import BarCodeProductList from "./BarCodeProduct"
 import { SCANDIT_KEY } from "../config/env"
+import BarCodeProductList from "./BarCodeProduct"
 
 const BarcodeScanner = () => {
   const [scannedCode, setScannedCode] = useState(null)
   const [buffer, setBuffer] = useState("")
   const [lastKeyTime, setLastKeyTime] = useState(Date.now())
   const [scannedSkus, setScannedSkus] = useState([])
+  const [scanditSDK, setScanditSDK] = useState(null)
 
+  // Load Scandit SDK via CDN
   useEffect(() => {
-    const loadScandit = async () => {
+    const loadScanditSDK = async () => {
       try {
-        // Dynamically load the UMD bundle
-        await import("https://cdn.jsdelivr.net/npm/scandit-sdk@5.x/build/scandit-sdk.min.js")
-
-        // Now Scandit is available as window.ScanditSDK
-        await window.ScanditSDK.configure(SCANDIT_KEY, {
-          engineLocation: "https://cdn.jsdelivr.net/npm/scandit-sdk@5.x/build/"
-        })
-
-        console.log("Scandit SDK loaded (camera not used)")
+        // Load Scandit SDK from CDN
+        if (!window.ScanditSDK) {
+          const script = document.createElement('script')
+          script.src = 'https://cdn.jsdelivr.net/npm/scandit-sdk@5.x/build/browser/index.js'
+          script.onload = async () => {
+            try {
+              await window.ScanditSDK.configure(SCANDIT_KEY, {
+                engineLocation: 'https://cdn.jsdelivr.net/npm/scandit-sdk@5.x/build/'
+              })
+              setScanditSDK(window.ScanditSDK)
+              console.log("Scandit SDK loaded via CDN")
+            } catch (error) {
+              console.error("Scandit configuration failed:", error)
+            }
+          }
+          script.onerror = () => {
+            console.error("Failed to load Scandit SDK from CDN")
+          }
+          document.head.appendChild(script)
+        } else {
+          // SDK already loaded
+          await window.ScanditSDK.configure(SCANDIT_KEY, {
+            engineLocation: 'https://cdn.jsdelivr.net/npm/scandit-sdk@5.x/build/'
+          })
+          setScanditSDK(window.ScanditSDK)
+          console.log("Scandit SDK already loaded")
+        }
       } catch (error) {
         console.error("Scandit setup failed:", error)
       }
     }
 
-    loadScandit()
+    loadScanditSDK()
   }, [])
 
+  // Listen for keyboard-based scanning (hardware scanner)
   useEffect(() => {
     const handleKeyDown = e => {
       const now = Date.now()
 
+      // Reset buffer if delay is long
       if (now - lastKeyTime > 100) setBuffer("")
 
       if (e.key === "Enter") {
@@ -41,6 +66,7 @@ const BarcodeScanner = () => {
         }
         setBuffer("")
       } else if (e.key.length === 1) {
+        // Only add printable characters
         setBuffer(prev => prev + e.key)
       }
 
@@ -60,7 +86,15 @@ const BarcodeScanner = () => {
             ? `✅ Scanned SKU: ${scannedCode}`
             : "🔍 Waiting for scan..."}
         </div>
-        <p className="mt-2 text-sm text-gray-200">Scanner ready. Just scan any code.</p>
+
+        <p className="mt-2 text-sm text-gray-200">
+          Scanner ready. Just scan any code.
+        </p>
+        
+        {/* SDK Status */}
+        <p className="mt-1 text-xs text-gray-200">
+          {scanditSDK ? "✅ SDK Ready" : "⏳ Loading SDK..."}
+        </p>
       </div>
       <hr className="mt-6 rounded" />
       <BarCodeProductList initialScannedSkus={scannedSkus} />
