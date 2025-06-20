@@ -2,11 +2,8 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Sidebar, GlobalHeader } from "../components/Layout";
 import Overview from "../components/Overview";
-import ProductsList from "../components/ProductList";
 import {
   generateMockNotifications,
-  generateMockOrders,
-  generateMockProducts,
 } from "../utils/helpers";
 import {
   ALL_POSSIBLE_PUBLISHING_PLATFORMS,
@@ -19,7 +16,8 @@ import Notifications from "../components/Notifications";
 import UsersList from "../components/UserList";
 import ProductForm from "../components/ProductForm";
 import BarcodeScanner from "../components/BarcodeScanner";
-import apiClient from "../config/api/apiClient";
+import { apiClient } from "../config/api/api";
+import ProductManagementPage from "../components/ProductManagementPage";
 
 const Dashboard = () => {
   const [activeView, setActiveView] = useState("overview");
@@ -353,14 +351,7 @@ console.log("main product list", products)
       //   );
       case "products":
         return (
-          <ProductsList
-            products={products}
-            categoriesStructure={CATEGORIES_STRUCTURE}
-            setActiveView={setActiveView}
-            setCurrentEditingProductId={setCurrentEditingProductId}
-            onUpdateProducts={handleUpdateProducts}
-            currentUser={currentUser}
-          />
+          <ProductManagementPage />
         );
       case "settings":
         return (

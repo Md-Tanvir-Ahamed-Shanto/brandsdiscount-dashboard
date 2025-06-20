@@ -34,4 +34,7 @@ apiClient.interceptors.response.use(
   }
 );
 
-export default apiClient;
+const BASE_URL = 'http://localhost:3000';
+
+export { apiClient, BASE_URL };
+
