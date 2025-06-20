@@ -348,7 +348,7 @@ const OrderListPage = () => {
                 <th scope="col" className="px-6 py-3">Customer</th>
                 <th scope="col" className="px-6 py-3">Date & Time</th>
                 <th scope="col" className="px-6 py-3">Source</th>
-                <th scope="col" className="px-6 py-3">Fulfill Loc.</th>
+                <th scope="col" className="px-6 py-3">Payment</th>
                 <th scope="col" className="px-6 py-3">Total</th>
                 <th scope="col" className="px-6 py-3">Status</th>
                 <th scope="col" className="px-6 py-3">Actions</th>
@@ -372,7 +372,7 @@ const OrderListPage = () => {
                   <td className="px-6 py-4">{order.user?.username || 'N/A'}</td>
                   <td className="px-6 py-4">{new Date(order.createdAt).toLocaleString()}</td>
                   <td className="px-6 py-4">{PLATFORMS.find(p => p.id === order.source)?.name || 'N/A'}</td>
-                  <td className="px-6 py-4">{order.fulfillmentLocation || 'N/A'}</td>
+                  <td className="px-6 py-4">{order.transaction.status || 'N/A'}</td>
                   <td className="px-6 py-4 text-green-400 font-semibold">${order.totalAmount.toFixed(2)}</td>
                   <td className="px-6 py-4">
                     {canUpdateOrderStatus ? (
