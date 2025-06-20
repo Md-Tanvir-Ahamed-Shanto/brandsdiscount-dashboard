@@ -15,9 +15,7 @@ import {
 } from "../constants";
 import OrdersList from "../components/OrdersList";
 import Categories from "../components/Categories";
-import Inventory from "../components/Inventory";
 import Notifications from "../components/Notifications";
-import Users from "../components/UserList";
 import UsersList from "../components/UserList";
 import ProductForm from "../components/ProductForm";
 import BarcodeScanner from "../components/BarcodeScanner";
