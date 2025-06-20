@@ -20,6 +20,7 @@ import Notifications from "../components/Notifications";
 import Users from "../components/UserList";
 import UsersList from "../components/UserList";
 import ProductForm from "../components/ProductForm";
+import BarcodeScanner from "../components/BarcodeScanner";
 
 const Dashboard = () => {
   const [activeView, setActiveView] = useState("overview");
@@ -315,7 +316,7 @@ const Dashboard = () => {
       case "categories":
         return <Categories categoriesStructure={CATEGORIES_STRUCTURE} />;
       case "inventory":
-        return <Inventory currentUser={currentUser} />;
+        return <BarcodeScanner />;
       case "notifications":
         return (
           <Notifications
