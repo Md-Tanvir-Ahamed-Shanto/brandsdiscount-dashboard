@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronDown, ChevronRight, PlusCircle, Trash2, Edit } from 'lucide-react';
+import { apiClient } from '../config/api/api';
 
 // --- API Utility ---
 // Replace with your actual API base URL
@@ -12,16 +13,9 @@ const api = {
   // Fetches all categories
   fetchCategories: async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/categories`, {
-        headers: {
-          'Authorization': AUTH_TOKEN,
-        },
-      });
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
-      }
-      const data = await response.json();
+      const response = await apiClient.get(`${API_BASE_URL}/categories`);
+       
+      const data = response.data;
       // The API response structure is { page, limit, totalPages, totalRecords, data: [...] }
       // We need to return the 'data' array which contains the nested categories.
       return data.data;
@@ -37,17 +31,11 @@ const api = {
       // NOTE: Ensure your backend DELETE route matches this.
       // The previous backend example used `/categories/:id` for DELETE.
       // Adjust this URL if your backend route is different (e.g., `/delete/${categoryId}`).
-      const response = await fetch(`${API_BASE_URL}/categories/${categoryId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': AUTH_TOKEN,
-        },
-      });
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+      const response = await apiClient.delete(`${API_BASE_URL}/categories/${categoryId}`)
+      if (response.status === 200) {
+        return true; // Indicate success
       }
-      return true; // Indicate success
+      return false
     } catch (error) {
       console.error("Error deleting category:", error);
       throw error; // Re-throw to be handled by the component
@@ -57,20 +45,15 @@ const api = {
   // Creates a new category
   createCategory: async (name, parentCategoryId = null) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/categories`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': AUTH_TOKEN,
-        },
-        body: JSON.stringify({ name, parentCategoryId }),
-      });
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+      const response = await apiClient.post(`${API_BASE_URL}/categories`, {
+        name,
+        parentCategoryId,
+      })
+      if (response.status === 201) {
+        const data =  response.data
+        return data.category; // Return the newly created category
       }
-      const data = await response.json();
-      return data.category; // Return the newly created category
+      return false
     } catch (error) {
       console.error("Error creating category:", error);
       throw error;
@@ -80,20 +63,15 @@ const api = {
   // Updates an existing category
   updateCategory: async (id, name, parentCategoryId = null) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/categories/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': AUTH_TOKEN,
-        },
-        body: JSON.stringify({ name, parentCategoryId }),
-      });
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+      const response = await apiClient.put(`${API_BASE_URL}/categories/${id}`, {
+        name,
+        parentCategoryId,
+      })
+      if (response.status === 200) {
+        const data = await response.data
+        return data.category; // Return the updated category
       }
-      const data = await response.json();
-      return data.category; // Return the updated category
+      return false
     } catch (error) {
       console.error("Error updating category:", error);
       throw error;

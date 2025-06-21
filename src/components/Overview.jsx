@@ -1,23 +1,71 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import React, { useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { BarChart2, DollarSign, Package, ShoppingCart, Store, Globe, ExternalLink } from 'lucide-react';
 import { PLATFORMS } from '../constants';
 import { calculateTotalSales, filterSalesByDate } from '../utils/helpers';
+import { apiClient } from '../config/api/api';
 
-const Overview = ({ products, orders }) => {
-  console.log("product",products)
+const Overview = () => {
+  // --- ALL STATE HOOKS AT THE VERY TOP ---
+  const [products, setProducts] = useState([]);
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // --- ALL EFFECT HOOKS AFTER STATE, BEFORE ANY CONDITIONAL LOGIC/RETURNS ---
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true); // Indicate loading when fetch starts
+        const [productsResponse, ordersResponse] = await Promise.all([
+          apiClient.get('/api/products'),
+          apiClient.get('/api/orders')
+        ]);
+
+        // Fix for products: Assuming your products API response also wraps the array in a 'data' property
+        setProducts(productsResponse.data.data); // <--- CHANGE IS HERE
+        setOrders(ordersResponse.data.data);   // This was already corrected for orders
+
+      } catch (err) {
+        console.error("Failed to fetch data:", err);
+        setError(err.response?.data?.message || "Failed to load data. Please try again later.");
+      } finally {
+        setLoading(false); // Stop loading regardless of success or failure
+      }
+    };
+
+    fetchData();
+  }, []); // Run once on mount
+
+  // --- ALL MEMO HOOKS AFTER STATE/EFFECTS, BEFORE ANY CONDITIONAL LOGIC/RETURNS ---
   const now = new Date();
-  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-  const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+  const startOfMonth = useMemo(
+    () => new Date(now.getFullYear(), now.getMonth(), 1),
+    [now.getFullYear(), now.getMonth()]
+  );
+  const endOfMonth = useMemo(
+    () => new Date(now.getFullYear(), now.getMonth() + 1, 0),
+    [now.getFullYear(), now.getMonth()]
+  );
 
   const dayOfWeek = now.getDay();
   const diffToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
-  const startOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() + diffToMonday);
-  startOfWeek.setHours(0, 0, 0, 0);
-  const endOfWeek = new Date(startOfWeek);
-  endOfWeek.setDate(startOfWeek.getDate() + 6);
-  endOfWeek.setHours(23, 59, 59, 999);
 
+  const startOfWeek = useMemo(() => {
+    const date = new Date(now.getFullYear(), now.getMonth(), now.getDate() + diffToMonday);
+    date.setHours(0, 0, 0, 0);
+    return date;
+  }, [now.getFullYear(), now.getMonth(), now.getDate(), diffToMonday]);
+
+  const endOfWeek = useMemo(() => {
+    const date = new Date(startOfWeek);
+    date.setDate(startOfWeek.getDate() + 6);
+    date.setHours(23, 59, 59, 999);
+    return date;
+  }, [startOfWeek]);
+
+  // Derived states that depend on fetched data, also useMemo for optimization
   const salesThisMonth = useMemo(
     () => calculateTotalSales(filterSalesByDate(orders, startOfMonth, endOfMonth)),
     [orders, startOfMonth, endOfMonth]
@@ -33,7 +81,10 @@ const Overview = ({ products, orders }) => {
     [orders]
   );
 
-  const totalActiveProducts = products?.filter(p => p.status === 'Active').length;
+  const totalActiveProducts = useMemo( // Memoize this too
+    () => products?.filter(p => p.status === 'Active').length || 0,
+    [products]
+  );
 
   const recentSales = useMemo(() => {
     return [...orders]
@@ -50,6 +101,16 @@ const Overview = ({ products, orders }) => {
     [physicalStoreSales]
   );
 
+  // --- CONDITIONAL RENDERING AFTER ALL HOOKS ARE GUARANTEED TO BE CALLED ---
+  if (loading) {
+    return <div className="p-4 md:p-6 text-white text-center">Loading overview data...</div>;
+  }
+
+  if (error) {
+    return <div className="p-4 md:p-6 text-red-500 text-center">Error: {error}</div>;
+  }
+
+  // --- REST OF YOUR JSX RENDER LOGIC ---
   const statsCards = [
     { title: "Total Sales (All Time)", value: `$${totalSalesAllTime.toFixed(2)}`, icon: BarChart2, color: "text-green-400" },
     { title: "Sales This Month", value: `$${salesThisMonth.toFixed(2)}`, icon: DollarSign, color: "text-green-300" },
