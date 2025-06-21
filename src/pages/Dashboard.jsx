@@ -19,6 +19,7 @@ import BarcodeScanner from "../components/BarcodeScanner";
 import { apiClient } from "../config/api/api";
 import ProductManagementPage from "../components/ProductManagementPage";
 import OrderListPage from "../components/OrderListPage";
+import ProductCategories from "../components/Categories";
 
 const Dashboard = () => {
   const [activeView, setActiveView] = useState("overview");
@@ -319,7 +320,7 @@ console.log("main product list", products)
           />
         );
       case "categories":
-        return <Categories categoriesStructure={CATEGORIES_STRUCTURE} />;
+        return <ProductCategories />;
       case "inventory":
         return <BarcodeScanner />;
       case "notifications":
