@@ -8,7 +8,6 @@ const AddEditProductModal = ({
   productData,
   onSave,
   categories,
-  brands,
   sizeTypes,
   loading,
 }) => {
@@ -224,7 +223,6 @@ const AddEditProductModal = ({
     onSave(dataToSave);
     console.log("FormData prepared:", dataToSave);
   };
-
   if (!isOpen) return null;
 
   return (
@@ -403,8 +401,8 @@ const AddEditProductModal = ({
             >
               <option value="">Select Size Type</option>
               {sizeTypes.map((type) => (
-                <option key={type} value={type}>
-                  {type}
+                <option key={type?.id} value={type.name}>
+                  {type.name}
                 </option>
               ))}
             </select>

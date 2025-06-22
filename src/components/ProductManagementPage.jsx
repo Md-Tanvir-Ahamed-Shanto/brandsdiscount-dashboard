@@ -17,65 +17,9 @@ import { apiClient, BASE_URL } from "../config/api/api";
 import { ImageWithFallback, Pagination } from "./common";
 import AddEditProductModal from "./models/AddEditProductModal";
 import { getListedPlatformNames, getStatusColor } from "../utils/helpers";
-
-export const PRODUCT_STATUSES = ["Active", "Hidden", "Draft"];
-export const SIZE_TYPES = [
-  "XXS (00)",
-  "XS (0-2)",
-  "S (4-6)",
-  "M (8-10)",
-  "L (12-14)",
-  "XXL+ (20+)",
-  "O/S",
-  "Other",
-];
-export const USER_ROLES = [
-  "Superadmin",
-  "Admin",
-  "Cashier",
-  "WarehouseUploader",
-  "ProductLister",
-  "Customer",
-];
-
-export const PERMISSIONS = {
-  Superadmin: [
-    "overview",
-    "products",
-    "orders",
-    "categories",
-    "inventory",
-    "notifications",
-    "users",
-    "settings",
-    "addProduct",
-    "editProduct",
-  ],
-  Admin: [
-    "overview",
-    "products",
-    "orders",
-    "categories",
-    "inventory",
-    "notifications",
-    "users",
-    "settings",
-    "addProduct",
-    "editProduct",
-  ],
-  Cashier: ["inventory"],
-  WarehouseUploader: ["addProduct"],
-  ProductLister: ["products", "addProduct", "editProduct", "categories"],
-  Customer: [],
-};
-
-const MOCK_BRANDS = ["Apple", "Samsung", "Dell", "Levis", "Nike", "Zara"]; // Keeping existing as no new list provided
-
-// Mock current user for role-based access
-const MOCK_CURRENT_USER = {
-  id: "user123",
-  role: "Admin", // 'Admin', 'Editor', 'WarehouseUploader'
-};
+import axios from "axios";
+import { useAuth } from "../hooks/useAuth";
+import { PERMISSIONS, PRODUCT_STATUSES } from "../constants";
 
 const BASE_API_URL = `${BASE_URL}/api`; // Ensure this matches your backend URL
 
@@ -102,11 +46,12 @@ const ProductManagementPage = () => {
   const [isAddEditModalOpen, setIsAddEditModalOpen] = useState(false);
   const [currentEditingProductId, setCurrentEditingProductId] = useState(null); // null for add, product ID for edit
   const [categories, setCategories] = useState([]);
-  const currentUser = MOCK_CURRENT_USER; // From context/auth
+  const [sizes, setSizes] = useState([]);
+  const { user: currentUser } = useAuth();
   // Determine permissions based on the provided PERMISSIONS constant
-  const canAddProducts = PERMISSIONS[currentUser.role]?.includes("addProduct");
+  const canAddProducts = PERMISSIONS[currentUser.role]?.includes("products");
   const canEditProducts =
-    PERMISSIONS[currentUser.role]?.includes("editProduct");
+    PERMISSIONS[currentUser.role]?.includes("products");
 
   const fetchProducts = useCallback(async () => {
     setLoading(true);
@@ -152,8 +97,8 @@ const ProductManagementPage = () => {
         // Full category path for display: Parent > Subcategory > Type
         name: `${parentCategory.name} > ${subCategory.name} > ${typeCategory.name}`,
         parentCategoryId: parentCategory.id, // ID of the top-level parent
-        subCategoryId: subCategory.id,     // ID of the direct subcategory (middle level)
-        categoryId: typeCategory.id,       // This maps to the actual 'type' category ID
+        subCategoryId: subCategory.id, // ID of the direct subcategory (middle level)
+        categoryId: typeCategory.id, // This maps to the actual 'type' category ID
       }))
     )
   );
@@ -169,8 +114,18 @@ const ProductManagementPage = () => {
     }
   };
 
+  const fetchSizes = async () => {
+    try {
+      const response = await axios.get(`${BASE_URL}/sizeroute/all-sizes`);
+      setSizes(response.data);
+    } catch (error) {
+      console.log("fetch error", error);
+    }
+  };
+
   useEffect(() => {
     fetchCategories();
+    fetchSizes();
   }, []);
   useEffect(() => {
     fetchProducts();
@@ -245,39 +200,43 @@ const ProductManagementPage = () => {
     setLoading(true);
     try {
       if (actionType === "toggleOffer") {
-        const response = await apiClient.patch(`${BASE_API_URL}/products/${productId}/toggle-offer`); // AWAIT HERE
+        const response = await apiClient.patch(
+          `${BASE_API_URL}/products/${productId}/toggle-offer`
+        ); // AWAIT HERE
         if (response.status === 200) {
           await fetchProducts(); // Re-fetch products to reflect changes
-        }
-        else {
+        } else {
           alert("Failed to toggle offer. Please try again.");
         }
-      }
-      else if (actionType === "deleteProduct") {
-        const response = await apiClient.delete(`${BASE_API_URL}/products/${productId}`); // AWAIT HERE
+      } else if (actionType === "deleteProduct") {
+        const response = await apiClient.delete(
+          `${BASE_API_URL}/products/${productId}`
+        ); // AWAIT HERE
         if (response.status === 200) {
           await fetchProducts(); // Re-fetch products to reflect changes
-        }
-        else {
+        } else {
           alert("Failed to delete product. Please try again.");
         }
       } else if (PRODUCT_STATUSES.includes(actionType)) {
         // Assume actionType is the new status
-        const response = await apiClient.patch(`${BASE_API_URL}/products/${productId}/status`, { status: actionType }); // AWAIT HERE
+        const response = await apiClient.patch(
+          `${BASE_API_URL}/products/${productId}/status`,
+          { status: actionType }
+        ); // AWAIT HERE
         if (response.status === 200) {
           await fetchProducts(); // Re-fetch products to reflect changes
-        }
-        else {
+        } else {
           alert("Failed to update status. Please try again.");
         }
-      }
-      else if (actionType === "updateInventoryBulk") {
+      } else if (actionType === "updateInventoryBulk") {
         // Assume actionType is the new status
-        const response = await apiClient.post(`${BASE_API_URL}/products/bulk-actions`, { status: actionType }); // AWAIT HERE
+        const response = await apiClient.post(
+          `${BASE_API_URL}/products/bulk-actions`,
+          { status: actionType }
+        ); // AWAIT HERE
         if (response.status === 200) {
           await fetchProducts(); // Re-fetch products to reflect changes
-        }
-        else {
+        } else {
           alert("Failed to update status. Please try again.");
         }
       }
@@ -299,9 +258,7 @@ const ProductManagementPage = () => {
       const productIdsArray = Array.from(selectedProducts);
       let payload = { productIds: productIdsArray, action: actionType };
 
-
       if (actionType === "updateInventoryBulk") {
-
         console.warn(
           "Bulk inventory update requires specific quantity input for each selected product. This is a placeholder."
         );
@@ -314,13 +271,15 @@ const ProductManagementPage = () => {
         payload.value = value;
       }
 
-      const response = await apiClient.post(`${BASE_API_URL}/products/bulk-actions`, payload); // AWAIT HERE
-      console.log("response", response)
+      const response = await apiClient.post(
+        `${BASE_API_URL}/products/bulk-actions`,
+        payload
+      ); // AWAIT HERE
+      console.log("response", response);
       if (response.status === 200) {
         await fetchProducts(); // Re-fetch products to reflect changes
         setSelectedProducts(new Set()); // Clear selection after bulk action
-      }
-      else {
+      } else {
         alert("Failed to perform bulk action. Please try again.");
       }
       setSelectedProducts(new Set()); // Clear selection after bulk action
@@ -340,12 +299,13 @@ const ProductManagementPage = () => {
   const handleDeleteClick = async (productId) => {
     setLoading(true);
     try {
-      const response = await apiClient.delete(`${BASE_API_URL}/products/${productId}`);
+      const response = await apiClient.delete(
+        `${BASE_API_URL}/products/${productId}`
+      );
       if (response.data.status === 200) {
         await fetchProducts(); // Re-fetch products to reflect changes
         setSelectedProducts(new Set()); // Clear selection after bulk action
-      }
-      else {
+      } else {
         alert("Failed to delete product. Please try again.");
       }
       setCurrentEditingProductId(null);
@@ -382,7 +342,7 @@ const ProductManagementPage = () => {
           alert(`Error updating product: ${errorData.message}`);
           throw new Error(
             errorData.message ||
-            `Failed to ${currentEditingProductId ? "update" : "add"} product`
+              `Failed to ${currentEditingProductId ? "update" : "add"} product`
           );
         }
         setIsLoading(false);
@@ -394,7 +354,7 @@ const ProductManagementPage = () => {
           setIsLoading(false);
           throw new Error(
             errorData.message ||
-            `Failed to ${currentEditingProductId ? "update" : "add"} product`
+              `Failed to ${currentEditingProductId ? "update" : "add"} product`
           );
         }
         setIsLoading(false);
@@ -469,21 +429,7 @@ const ProductManagementPage = () => {
               </option>
             ))}
           </select>
-          {/* <select
-            value={filters.brand}
-            onChange={(e) => {
-              setFilters({ ...filters, brand: e.target.value });
-              setCurrentPage(1);
-            }}
-            className="bg-gray-700 text-white rounded-lg p-2 focus:ring-indigo-500 focus:border-indigo-500"
-          >
-            <option value="">All Brands</option>
-            {MOCK_BRANDS.map((brand) => (
-              <option key={brand} value={brand}>
-                {brand}
-              </option>
-            ))}
-          </select> */}
+
           <select
             value={filters.status}
             onChange={(e) => {
@@ -713,7 +659,8 @@ const ProductManagementPage = () => {
                               ? "cursor-pointer hover:text-white"
                               : ""
                           } ${
-                            product.quantity === 0 && product.status === "Active"
+                            product.quantity === 0 &&
+                            product.status === "Active"
                               ? "text-red-400 font-semibold"
                               : ""
                           }`}
@@ -821,8 +768,7 @@ const ProductManagementPage = () => {
         onSave={handleSaveProduct}
         loading={isLoading}
         categories={ALL_CATEGORIES_FLAT}
-        brands={MOCK_BRANDS}
-        sizeTypes={SIZE_TYPES}
+        sizeTypes={sizes}
       />
     </div>
   );
