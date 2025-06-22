@@ -70,16 +70,14 @@ export const ALL_POSSIBLE_PUBLISHING_PLATFORMS = [
 export const PRODUCT_STATUSES = ['Active', 'Hidden', 'Draft'];
 export const ORDER_STATUSES = ["Pending", "Processing", "Shipped", "Delivered", "Cancelled", "Refunded", "On Hold"];
 export const SIZE_TYPES = ['XXS (00)', 'XS (0-2)', 'S (4-6)', 'M (8-10)', 'L (12-14)', 'XL (16-18)', 'XXL+ (20+)', 'O/S', 'Other'];
-export const USER_ROLES = ['Superadmin', 'Admin', 'Cashier', 'WarehouseUploader', 'ProductLister', 'Customer'];
+export const USER_ROLES = ['SuperAdmin', 'Admin', 'Cashier', 'WareHouse', 'OfficeEmpolyee'];
+
 
 export const PERMISSIONS = {
-  Superadmin: ['overview', 'products', 'orders', 'categories', 'inventory', 'notifications', 'users', 'settings', 'addProduct', 'editProduct','update_order_status','delete_order','send_customer_email'],
-  Admin: ['overview', 'products', 'orders', 'categories', 'inventory', 'notifications', 'users', 'settings', 'addProduct', 'editProduct','update_order_status','delete_order','send_customer_email'],
+  SuperAdmin: ['overview', 'products', 'orders', 'categories', 'inventory', 'notifications', 'users', 'settings', 'editProduct','update_order_status','delete_order','send_customer_email'],
+  Admin: ['overview', 'products', 'orders', 'categories', 'inventory', 'notifications', 'users', 'settings', 'editProduct','update_order_status','delete_order','send_customer_email'],
   Cashier: ['inventory'],
-  WarehouseUploader: ['addProduct'],
-  ProductLister: ['products', 'addProduct', 'editProduct', 'categories'],
-  Customer: [],
-  update_order_status: ['Admin', 'Superadmin'],
-  delete_order: ['Admin', 'Superadmin'],
-  send_customer_email: ['Admin', 'Superadmin'],
+  WareHouse: ['addProduct'],
+  OfficeEmpolyee: ['products', 'categories','orders'],
+  PlatformUser: []
 };

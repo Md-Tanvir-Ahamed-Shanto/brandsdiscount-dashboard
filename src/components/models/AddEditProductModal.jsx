@@ -287,23 +287,19 @@ const AddEditProductModal = ({
             )}
           </div>
           <div className="flex flex-col">
-            <label htmlFor="brandName" className="text-gray-300 text-sm mb-1">
-              Brand Name
+            <label htmlFor="sku" className="text-gray-300 text-sm mb-1">
+              Brand Name 
             </label>
-            <select
+            <input
+              type="text"
               id="brandName"
               name="brandName"
-              value={formData.brandName}
+              value={formData?.brandName || ""}
               onChange={handleChange}
-              className="bg-gray-700 text-white rounded-lg p-2 focus:ring-indigo-500 focus:border-indigo-500"
-            >
-              <option value="">Select Brand</option>
-              {brands.map((brand) => (
-                <option key={brand} value={brand}>
-                  {brand}
-                </option>
-              ))}
-            </select>
+              className={`bg-gray-700 text-white rounded-lg p-2 focus:ring-indigo-500 focus:border-indigo-500`}
+            />
+            
+            
           </div>
           <div className="flex flex-col">
             <label htmlFor="color" className="text-gray-300 text-sm mb-1">
@@ -313,7 +309,7 @@ const AddEditProductModal = ({
               type="text"
               id="color"
               name="color"
-              value={formData.color}
+              value={formData?.color || ""}
               onChange={handleChange}
               className="bg-gray-700 text-white rounded-lg p-2 focus:ring-indigo-500 focus:border-indigo-500"
             />

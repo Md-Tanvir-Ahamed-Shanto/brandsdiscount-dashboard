@@ -5,10 +5,14 @@ import {
 } from 'lucide-react';
 import { PERMISSIONS } from '../constants';
 
-export const Sidebar = ({ activeView, setActiveView, currentUser, isOpen, setIsOpen }) => {
+
+export const Sidebar = ({ activeView, setActiveView, currentUser, isOpen, setIsOpen, logout }) => {
+
+  
   const navItems = [
     { name: 'Overview', icon: BarChart2, view: 'overview' },
     { name: 'Products', icon: Package, view: 'products' },
+    {name: 'Add Product', icon: Layers, view: 'addProduct' },
     { name: 'Orders', icon: ShoppingCart, view: 'orders' },
     { name: 'Categories', icon: Layers, view: 'categories' },
     { name: 'Inventory', icon: List, view: 'inventory' },
@@ -18,6 +22,7 @@ export const Sidebar = ({ activeView, setActiveView, currentUser, isOpen, setIsO
   ];
 
   const userPermissions = PERMISSIONS[currentUser.role] || [];
+  // const { user: currentUser, logout } = useAuth();
   const visibleNavItems = navItems.filter(item => 
     userPermissions.includes(item.view) || 
     (currentUser.role === 'Customer' && item.view === 'overview')
@@ -54,8 +59,9 @@ export const Sidebar = ({ activeView, setActiveView, currentUser, isOpen, setIsO
           ))}
         </nav>
         <div className="p-4 border-t border-gray-700">
-          <button className="flex items-center w-full px-4 py-3 rounded-lg hover:bg-gray-700 hover:text-white transition-colors duration-200">
-            <LogOut size={20} className="mr-3" />Logout
+          <button onClick={logout} className="flex items-center w-full px-4 py-3 rounded-lg hover:bg-gray-700 hover:text-white transition-colors duration-200">
+            <LogOut size={20} className="mr-3" />
+            Logout
           </button>
         </div>
       </div>
@@ -63,11 +69,18 @@ export const Sidebar = ({ activeView, setActiveView, currentUser, isOpen, setIsO
   );
 };
 
-export const GlobalHeader = ({ title, unreadNotificationsCount, onNotificationsClick, currentUser, onMenuClick }) => {
+export const GlobalHeader = ({ title, unreadNotificationsCount, onNotificationsClick, currentUser, isOpen, setIsOpen, onMenuClick, logout }) => {
+  const handleMenuClick = () => {
+    setIsOpen(!isOpen);
+  };
+  const handleLogout = () => {
+    logout();
+  };
+  
   return (
     <header className="bg-gray-800 shadow-md p-4 flex justify-between items-center">
       <div className="flex items-center">
-        <button onClick={onMenuClick} className="lg:hidden text-gray-400 hover:text-white mr-4">
+        <button onClick={handleMenuClick} className="lg:hidden text-gray-400 hover:text-white mr-4">
           <Menu size={24} />
         </button>
         <h2 className="text-xl md:text-2xl font-semibold text-white">{title}</h2>

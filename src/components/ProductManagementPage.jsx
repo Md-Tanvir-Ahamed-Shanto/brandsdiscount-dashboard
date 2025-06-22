@@ -80,6 +80,7 @@ const MOCK_CURRENT_USER = {
 const BASE_API_URL = `${BASE_URL}/api`; // Ensure this matches your backend URL
 
 // Main Product Management Page Component
+// Main Product Management Page Component
 const ProductManagementPage = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -175,9 +176,9 @@ const ProductManagementPage = () => {
     fetchProducts();
   }, [fetchProducts]);
 
-  const filteredAndSortedProducts = products; 
+  const filteredAndSortedProducts = products;
 
-  const paginatedProducts = products; 
+  const paginatedProducts = products;
 
   // Handle Select All Checkbox
   const handleSelectAll = (e) => {
@@ -244,7 +245,7 @@ const ProductManagementPage = () => {
     setLoading(true);
     try {
       if (actionType === "toggleOffer") {
-        const response = apiClient.post(`${BASE_API_URL}/products/${productId}/toggle-offer`);
+        const response = await apiClient.patch(`${BASE_API_URL}/products/${productId}/toggle-offer`); // AWAIT HERE
         if (response.status === 200) {
           await fetchProducts(); // Re-fetch products to reflect changes
         }
@@ -253,7 +254,7 @@ const ProductManagementPage = () => {
         }
       }
       else if (actionType === "deleteProduct") {
-        const response = apiClient.delete(`${BASE_API_URL}/products/${productId}`);
+        const response = await apiClient.delete(`${BASE_API_URL}/products/${productId}`); // AWAIT HERE
         if (response.status === 200) {
           await fetchProducts(); // Re-fetch products to reflect changes
         }
@@ -262,7 +263,7 @@ const ProductManagementPage = () => {
         }
       } else if (PRODUCT_STATUSES.includes(actionType)) {
         // Assume actionType is the new status
-        const response = apiClient.post(`${BASE_API_URL}/products/${productId}/status`, { status: actionType });
+        const response = await apiClient.patch(`${BASE_API_URL}/products/${productId}/status`, { status: actionType }); // AWAIT HERE
         if (response.status === 200) {
           await fetchProducts(); // Re-fetch products to reflect changes
         }
@@ -272,17 +273,7 @@ const ProductManagementPage = () => {
       }
       else if (actionType === "updateInventoryBulk") {
         // Assume actionType is the new status
-        const response = apiClient.post(`${BASE_API_URL}/products/${productId}/status`, { status: actionType });
-        if (response.status === 200) {
-          await fetchProducts(); // Re-fetch products to reflect changes
-        }
-        else {
-          alert("Failed to update status. Please try again.");
-        }
-      }
-      else if (actionType === "updateInventoryBulk") {
-        // Assume actionType is the new status
-        const response = apiClient.post(`${BASE_API_URL}/products/${productId}/status`, { status: actionType });
+        const response = await apiClient.post(`${BASE_API_URL}/products/bulk-actions`, { status: actionType }); // AWAIT HERE
         if (response.status === 200) {
           await fetchProducts(); // Re-fetch products to reflect changes
         }
@@ -308,9 +299,9 @@ const ProductManagementPage = () => {
       const productIdsArray = Array.from(selectedProducts);
       let payload = { productIds: productIdsArray, action: actionType };
 
-      
+
       if (actionType === "updateInventoryBulk") {
-        
+
         console.warn(
           "Bulk inventory update requires specific quantity input for each selected product. This is a placeholder."
         );
@@ -323,7 +314,8 @@ const ProductManagementPage = () => {
         payload.value = value;
       }
 
-      const response = apiClient.post(`${BASE_API_URL}/products/bulk-actions`, payload);
+      const response = await apiClient.post(`${BASE_API_URL}/products/bulk-actions`, payload); // AWAIT HERE
+      console.log("response", response)
       if (response.status === 200) {
         await fetchProducts(); // Re-fetch products to reflect changes
         setSelectedProducts(new Set()); // Clear selection after bulk action
@@ -331,11 +323,10 @@ const ProductManagementPage = () => {
       else {
         alert("Failed to perform bulk action. Please try again.");
       }
-      await fetchProducts(); // Re-fetch products to reflect changes
       setSelectedProducts(new Set()); // Clear selection after bulk action
+      setCurrentEditingProductId(null);
     } catch (err) {
       console.error(`Error performing bulk action ${actionType}:`, err);
-      setError(`Failed to perform bulk action: ${err.message}.`);
     } finally {
       setLoading(false);
     }
@@ -344,6 +335,25 @@ const ProductManagementPage = () => {
   const handleEditClick = (productId) => {
     setCurrentEditingProductId(productId);
     setIsAddEditModalOpen(true);
+  };
+
+  const handleDeleteClick = async (productId) => {
+    setLoading(true);
+    try {
+      const response = await apiClient.delete(`${BASE_API_URL}/products/${productId}`);
+      if (response.data.status === 200) {
+        await fetchProducts(); // Re-fetch products to reflect changes
+        setSelectedProducts(new Set()); // Clear selection after bulk action
+      }
+      else {
+        alert("Failed to delete product. Please try again.");
+      }
+      setCurrentEditingProductId(null);
+    } catch (err) {
+      console.error(`Error deleting product ${productId}:`, err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleAddProductClick = () => {
@@ -372,7 +382,7 @@ const ProductManagementPage = () => {
           alert(`Error updating product: ${errorData.message}`);
           throw new Error(
             errorData.message ||
-              `Failed to ${currentEditingProductId ? "update" : "add"} product`
+            `Failed to ${currentEditingProductId ? "update" : "add"} product`
           );
         }
         setIsLoading(false);
@@ -384,7 +394,7 @@ const ProductManagementPage = () => {
           setIsLoading(false);
           throw new Error(
             errorData.message ||
-              `Failed to ${currentEditingProductId ? "update" : "add"} product`
+            `Failed to ${currentEditingProductId ? "update" : "add"} product`
           );
         }
         setIsLoading(false);
@@ -703,7 +713,7 @@ const ProductManagementPage = () => {
                               ? "cursor-pointer hover:text-white"
                               : ""
                           } ${
-                            product.quantity === 0
+                            product.quantity === 0 && product.status === "Active"
                               ? "text-red-400 font-semibold"
                               : ""
                           }`}

@@ -3,87 +3,32 @@ import React, { useState, useEffect } from "react";
 import { Sidebar, GlobalHeader } from "../components/Layout";
 import Overview from "../components/Overview";
 import {
-  generateMockNotifications,
-} from "../utils/helpers";
-import {
-  ALL_POSSIBLE_PUBLISHING_PLATFORMS,
-  CATEGORIES_STRUCTURE,
   PERMISSIONS,
 } from "../constants";
 import Notifications from "../components/Notifications";
 import UsersList from "../components/UserList";
-import ProductForm from "../components/ProductForm";
 import BarcodeScanner from "../components/BarcodeScanner";
-import { apiClient } from "../config/api/api";
 import ProductManagementPage from "../components/ProductManagementPage";
 import OrderListPage from "../components/OrderListPage";
 import ProductCategories from "../components/Categories";
+import { useAuth } from "../hooks/useAuth";
+import { ShieldAlert } from "lucide-react";
+import ProductsPage from "../components/WareProductUpload";
 
 const Dashboard = () => {
   const [activeView, setActiveView] = useState("overview");
-  const [currentEditingProductId, setCurrentEditingProductId] = useState(null);
-  const [products, setProducts] = useState([]);
-  const [orders, setOrders] = useState([]);
   const [notifications, setNotifications] = useState([]);
-  const [currentUser, setCurrentUser] = useState({
-    name: "Admin User",
-    role: "Admin",
-    avatar: "https://i.pravatar.cc/150?img=3",
-  });
-  const [appUsers, setAppUsers] = useState([
-    {
-      id: "user_super",
-      username: "Super Admin User",
-      role: "Superadmin",
-      password: "password",
-    },
-    {
-      id: "user_admin",
-      username: "Admin User",
-      role: "Admin",
-      password: "password",
-    },
-    {
-      id: "user_lister",
-      username: "Product Lister User",
-      role: "ProductLister",
-      password: "password",
-    },
-    {
-      id: "user_warehouse",
-      username: "WarehouseUploader",
-      role: "WarehouseUploader",
-      password: "password",
-    },
-    {
-      id: "user_cashier",
-      username: "Cashier User",
-      role: "Cashier",
-      password: "password",
-    },
-    {
-      id: "user_cust1",
-      username: "Alice Wonderland",
-      role: "Customer",
-      password: "password",
-    },
-    {
-      id: "user_cust2",
-      username: "Bob The Builder",
-      role: "Customer",
-      password: "password",
-    },
-  ]);
-  // Mock data loading
-  const handleAddUser = (newUser) => {
-    setAppUsers((prev) => [...prev, newUser]);
-    console.log("New user added (mock):", newUser);
-  };
+  const [isOpen, setIsOpen] = useState(false);
+  const { user: currentUser, logout } = useAuth();
 
   const handleMarkNotificationAsRead = (id) =>
     setNotifications((prev) =>
       prev.map((n) => (n.id === id ? { ...n, read: true } : n))
     );
+
+    useEffect(()=>{
+      setActiveView(PERMISSIONS[currentUser.role]?.[0] || 'overview')
+    },[currentUser.role])
   const handleMarkAllAsRead = () =>
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
   const handleDeleteNotification = (id) =>
@@ -121,6 +66,8 @@ const Dashboard = () => {
         return (
           <Overview/>
         );
+        case "addProduct":
+          return <ProductsPage />
       case "orders":
         return (
           <OrderListPage/> 
@@ -140,11 +87,7 @@ const Dashboard = () => {
         );
       case "users":
         return (
-          <UsersList
-            users={appUsers}
-            onAddUser={handleAddUser}
-            currentUser={currentUser}
-          />
+          <UsersList/>
         );
       case "products":
         return (
@@ -182,14 +125,19 @@ const Dashboard = () => {
         activeView={activeView}
         setActiveView={setActiveView}
         currentUser={currentUser}
+        isOpen={isOpen}
+        logout={logout}
+        setIsOpen={setIsOpen}
       />
       <div className="flex-1 flex flex-col overflow-hidden">
         <GlobalHeader
           title={activeView.charAt(0).toUpperCase() + activeView.slice(1)}
           notifications={notifications}
           currentUser={currentUser}
+          isOpen={isOpen}
+          setIsOpen={setIsOpen}
         />
-        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-900">
+        <main  className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-900">
           {renderContent()}
         </main>
       </div>

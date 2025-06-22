@@ -107,7 +107,7 @@ function Login() {
 
           <div className="mt-6 text-center">
             <p className="text-blue-200 text-sm">
-              Demo: demo@pos.com / demo123
+             this page not for you !
             </p>
           </div>
         </div>
