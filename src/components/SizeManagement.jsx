@@ -219,7 +219,7 @@ const SizeManagement = () => {
                                 <div key={size.id} className="bg-gray-700 p-3 rounded-lg flex justify-between items-center">
                                     <p className="text-white font-medium">{size.name}</p>
                                     {/* Action buttons (Admin-only) */}
-                                    {currentUser?.role === 'Admin' && (
+                                    
                                         <div className="flex items-center space-x-2">
                                             <button
                                                 className="text-blue-400 hover:text-blue-300"
@@ -236,7 +236,7 @@ const SizeManagement = () => {
                                                 <Trash2 size={18} />
                                             </button>
                                         </div>
-                                    )}
+                                    
                                 </div>
                             ))
                         ) : (
