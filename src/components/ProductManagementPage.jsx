@@ -618,11 +618,7 @@ const ProductManagementPage = () => {
                           ${product.salePrice.toFixed(2)}
                         </div>
                       )}
-                      {product.hasTenDollarOffer && product.offerPrice && (
-                        <div className="text-purple-400">
-                          ${product.offerPrice.toFixed(2)} (Offer)
-                        </div>
-                      )}
+                      
                     </td>
                     <td className="px-4 py-3 text-center">
                       {typeof editingQuantity[product.id] !== "undefined" &&
