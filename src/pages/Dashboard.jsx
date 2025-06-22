@@ -14,6 +14,7 @@ import ProductCategories from "../components/Categories";
 import { useAuth } from "../hooks/useAuth";
 import { ShieldAlert } from "lucide-react";
 import ProductsPage from "../components/WareProductUpload";
+import SizeManagement from "../components/SizeManagement";
 
 const Dashboard = () => {
   const [activeView, setActiveView] = useState("overview");
@@ -76,6 +77,8 @@ const Dashboard = () => {
         return <ProductCategories />;
       case "inventory":
         return <BarcodeScanner />;
+      case "sizes":
+        return <SizeManagement />
       case "notifications":
         return (
           <Notifications

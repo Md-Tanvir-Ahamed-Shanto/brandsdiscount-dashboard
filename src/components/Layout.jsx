@@ -1,7 +1,8 @@
 import React from 'react';
 import { 
   BarChart2, Package, ShoppingCart, Layers, List, Bell, 
-  Users, Settings, LogOut, Menu, Search, ChevronDown 
+  Users, Settings, LogOut, Menu, Search, ChevronDown, 
+  Info
 } from 'lucide-react';
 import { PERMISSIONS } from '../constants';
 
@@ -16,6 +17,7 @@ export const Sidebar = ({ activeView, setActiveView, currentUser, isOpen, setIsO
     { name: 'Orders', icon: ShoppingCart, view: 'orders' },
     { name: 'Categories', icon: Layers, view: 'categories' },
     { name: 'Inventory', icon: List, view: 'inventory' },
+    { name: 'Size Management', icon: Info, view: 'sizes' },
     { name: 'Notifications', icon: Bell, view: 'notifications' },
     { name: 'Users', icon: Users, view: 'users' },
     { name: 'Settings', icon: Settings, view: 'settings' },
