@@ -20,6 +20,7 @@ const AddEditProductModal = ({
     itemLocation: "",
     sizeId: "",
     sizeType: "",
+    sizes: "",
     postName: "",
     categoryId: "",
     subCategoryId: "",
@@ -54,6 +55,7 @@ const AddEditProductModal = ({
           itemLocation: productData.itemLocation || "",
           sizeId: productData.sizeId || "",
           sizeType: productData.sizeType || "",
+          sizes: productData.sizes || "",
           postName: productData.postName || "",
           categoryId: productData.category?.id || "",
           subCategoryId: productData.subCategory?.id || "",
@@ -82,6 +84,7 @@ const AddEditProductModal = ({
           itemLocation: "",
           sizeId: "",
           sizeType: "",
+          sizes: "",
           postName: "",
           categoryId: "",
           subCategoryId: "",
@@ -376,14 +379,14 @@ const AddEditProductModal = ({
             </select>
           </div>
           <div className="flex flex-col">
-            <label htmlFor="sizeId" className="text-gray-300 text-sm mb-1">
-              Size ID (Placeholder)
+            <label htmlFor="sizes" className="text-gray-300 text-sm mb-1">
+              Sizes (Placeholder)
             </label>
             <input
               type="text"
-              id="sizeId"
-              name="sizeId"
-              value={formData.sizeId}
+              id="sizes"
+              name="sizes"
+              value={formData.sizes}
               onChange={handleChange}
               className="bg-gray-700 text-white rounded-lg p-2 focus:ring-indigo-500 focus:border-indigo-500"
             />
