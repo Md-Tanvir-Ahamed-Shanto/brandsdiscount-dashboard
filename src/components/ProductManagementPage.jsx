@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import React, { useState, useEffect, useCallback } from "react";
 import {
   Search,
@@ -527,10 +528,10 @@ const ProductManagementPage = () => {
                       type="checkbox"
                       onChange={handleSelectAll}
                       checked={
-                        selectedProducts.size === paginatedProducts.length &&
-                        paginatedProducts.length > 0 &&
-                        paginatedProducts.every((p) =>
-                          selectedProducts.has(p.id)
+                        selectedProducts?.size === paginatedProducts?.length &&
+                        paginatedProducts?.length > 0 &&
+                        paginatedProducts?.every((p) =>
+                          selectedProducts?.has(p.id)
                         )
                       }
                       className="form-checkbox h-4 w-4 text-indigo-600 bg-gray-600 border-gray-500 rounded focus:ring-indigo-500"
@@ -563,11 +564,11 @@ const ProductManagementPage = () => {
                 </tr>
               </thead>
               <tbody>
-                {paginatedProducts.map((product) => (
+                {paginatedProducts?.map((product) => (
                   <tr
                     key={product.id}
                     className={`border-b border-gray-700 hover:bg-gray-700/50 ${
-                      selectedProducts.has(product.id)
+                      selectedProducts?.has(product.id)
                         ? "bg-gray-700"
                         : "bg-gray-800"
                     }`}
@@ -575,7 +576,7 @@ const ProductManagementPage = () => {
                     <td className="px-4 py-3">
                       <input
                         type="checkbox"
-                        checked={selectedProducts.has(product.id)}
+                        checked={selectedProducts?.has(product.id)}
                         onChange={() => handleSelectProduct(product.id)}
                         className="form-checkbox h-4 w-4 text-indigo-600 bg-gray-600 border-gray-500 rounded focus:ring-indigo-500"
                       />
@@ -739,7 +740,7 @@ const ProductManagementPage = () => {
             </table>
           )}
         </div>
-        {paginatedProducts.length === 0 && !loading && !error && (
+        {paginatedProducts?.length === 0 && !loading && !error && (
           <p className="text-center text-gray-500 mt-8">
             No products found matching your criteria.
           </p>

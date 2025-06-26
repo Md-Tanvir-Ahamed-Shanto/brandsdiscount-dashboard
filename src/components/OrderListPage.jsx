@@ -372,8 +372,8 @@ const OrderListPage = () => {
                   <td className="px-6 py-4">{order.user?.username || 'N/A'}</td>
                   <td className="px-6 py-4">{new Date(order.createdAt).toLocaleString()}</td>
                   <td className="px-6 py-4">{PLATFORMS.find(p => p.id === order.source)?.name || 'N/A'}</td>
-                  <td className="px-6 py-4">{order.transaction.status || 'N/A'}</td>
-                  <td className="px-6 py-4 text-green-400 font-semibold">${order.totalAmount.toFixed(2)}</td>
+                  <td className="px-6 py-4">{order?.transaction?.status || 'N/A'}</td>
+                  <td className="px-6 py-4 text-green-400 font-semibold">${order?.totalAmount.toFixed(2)}</td>
                   <td className="px-6 py-4">
                     {canUpdateOrderStatus ? (
                       <select
