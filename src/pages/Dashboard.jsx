@@ -15,6 +15,7 @@ import { useAuth } from "../hooks/useAuth";
 import { ShieldAlert } from "lucide-react";
 import ProductsPage from "../components/WareProductUpload";
 import SizeManagement from "../components/SizeManagement";
+import { ToastContainer } from "react-toastify";
 
 const Dashboard = () => {
   const [activeView, setActiveView] = useState("overview");
@@ -144,6 +145,7 @@ const Dashboard = () => {
           {renderContent()}
         </main>
       </div>
+       <ToastContainer />
     </div>
   );
 };

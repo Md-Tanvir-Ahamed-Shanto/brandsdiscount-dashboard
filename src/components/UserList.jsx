@@ -188,7 +188,7 @@ const UsersList = () => {
                             </div>
                             <div>
                                 <label htmlFor="newUserPassword" className="block text-sm font-medium">Password</label>
-                                <input type="password" id="newUserPassword" value={newUserPassword} onChange={(e) => setNewUserPassword(e.target.value)} required className="mt-1 block w-full bg-gray-700 border-gray-600 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500" />
+                                <input type="" id="newUserPassword" value={newUserPassword} onChange={(e) => setNewUserPassword(e.target.value)} required className="mt-1 block w-full bg-gray-700 border-gray-600 rounded-md p-2 focus:ring-indigo-500 focus:border-indigo-500" />
                             </div>
                             <div>
                                 <label htmlFor="newUserRole" className="block text-sm font-medium">Role</label>

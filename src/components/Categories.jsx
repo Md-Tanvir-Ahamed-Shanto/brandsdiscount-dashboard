@@ -2,18 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { ChevronDown, ChevronRight, PlusCircle, Trash2, Edit } from 'lucide-react';
 import { apiClient } from '../config/api/api';
 
-// --- API Utility ---
-// Replace with your actual API base URL
 const API_BASE_URL = 'http://localhost:3000/api';
-// !!! IMPORTANT: Replace this with a dynamic token or proper authentication flow !!!
-// This token is for demonstration purposes only.
+
 const AUTH_TOKEN = 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Ijg1OGNhZTE2LWM1N2ItNGRhYi1iYTllLTY4YjFiODMwOWRlMCIsImlhdCI6MTc1MDUxNTk3MCwiZXhwIjoxNzUwNTE5NTcwfQ.IAwGVtT8BjZj4Od5Ipz_oND_ddGk00Ik92aQYbZCQ3k';
 
 const api = {
   // Fetches all categories
   fetchCategories: async () => {
     try {
-      const response = await apiClient.get(`${API_BASE_URL}/categories`);
+      const response = await apiClient.get(`/api/categories`);
        
       const data = response.data;
       // The API response structure is { page, limit, totalPages, totalRecords, data: [...] }
@@ -31,7 +28,7 @@ const api = {
       // NOTE: Ensure your backend DELETE route matches this.
       // The previous backend example used `/categories/:id` for DELETE.
       // Adjust this URL if your backend route is different (e.g., `/delete/${categoryId}`).
-      const response = await apiClient.delete(`${API_BASE_URL}/categories/${categoryId}`)
+      const response = await apiClient.delete(`/api/categories/${categoryId}`)
       if (response.status === 200) {
         return true; // Indicate success
       }
@@ -45,7 +42,7 @@ const api = {
   // Creates a new category
   createCategory: async (name, parentCategoryId = null) => {
     try {
-      const response = await apiClient.post(`${API_BASE_URL}/categories`, {
+      const response = await apiClient.post(`/api/categories`, {
         name,
         parentCategoryId,
       })
@@ -63,7 +60,7 @@ const api = {
   // Updates an existing category
   updateCategory: async (id, name, parentCategoryId = null) => {
     try {
-      const response = await apiClient.put(`${API_BASE_URL}/categories/${id}`, {
+      const response = await apiClient.put(`/api/categories/${id}`, {
         name,
         parentCategoryId,
       })

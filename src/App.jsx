@@ -24,6 +24,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="*" element={<h1>404</h1>} />
           <Route path="/old" element={<Old />} />
+          
         </Routes>
       </BrowserRouter>
     </AuthProvider>
