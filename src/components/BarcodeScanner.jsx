@@ -1,19 +1,35 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react"; // Add useRef, useCallback
 import { SCANDIT_KEY } from "../config/env";
-import BarCodeProductList from "./BarCodeProduct";
 import { toast } from "react-toastify";
+import BarCodeProductList from "./BarCodeProduct";
+const SCAN_DEBOUNCE_TIME = 150;
 
 const BarcodeScanner = () => {
   const [scannedCode, setScannedCode] = useState(null);
-  const [buffer, setBuffer] = useState(""); 
-  const [lastKeyTime, setLastKeyTime] = useState(Date.now()); 
-  
-  
-  const [scannedSkusFromScanner, setScannedSkusFromScanner] = useState([]); 
-  
-  const [scanditSDK, setScanditSDK] = useState(null); 
+  const [buffer, setBuffer] = useState("");
+  const [scannedSkusFromScanner, setScannedSkusFromScanner] = useState([]);
+  const [scanditSDK, setScanditSDK] = useState(null);
 
-  // Load Scandit SDK via CDN (for camera-based scanning if implemented)
+  const timeoutRef = useRef(null); 
+
+  // Function to process a scanned SKU (memoized to prevent unnecessary re-renders)
+  const processScannedSku = useCallback((sku) => {
+    if (sku) {
+      setScannedCode(sku); 
+      setScannedSkusFromScanner(prev => {
+       
+        const currentUniqueSkus = new Set(prev);
+        if (!currentUniqueSkus.has(sku)) {
+          return [...prev, sku];
+        }
+        return prev;
+      });
+      toast.success(`Product added: ${sku}`); 
+    }
+    setBuffer(""); 
+  }, []); 
+
+  // Load Scandit SDK (existing code, no change needed for this part of the functionality)
   useEffect(() => {
     const loadScanditSDK = async () => {
       try {
@@ -38,7 +54,6 @@ const BarcodeScanner = () => {
           };
           document.head.appendChild(script);
         } else {
-          // SDK already loaded, re-configure (safe to call multiple times)
           await window.ScanditSDK.configure(SCANDIT_KEY, {
             engineLocation: 'https://cdn.jsdelivr.net/npm/scandit-sdk@5.x/build/'
           });
@@ -54,42 +69,35 @@ const BarcodeScanner = () => {
     loadScanditSDK();
   }, []);
 
- 
+  // Listen for keyboard-based scanning (hardware scanner or manual keyboard input)
   useEffect(() => {
     const handleKeyDown = e => {
-      const now = Date.now();
-
-      if (now - lastKeyTime > 100) { 
-        setBuffer(""); 
+      
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
       }
 
-      if (e.key === "Enter") {
-        if (buffer) {
-          const scannedSku = buffer.trim();
-          if (scannedSku) {
-            setScannedCode(scannedSku); 
-         
-            setScannedSkusFromScanner(prev => {
-               
-                const newSkus = new Set(prev);
-                if (!newSkus.has(scannedSku)) {
-                    return [...prev, scannedSku];
-                }
-                return prev; 
-            });
-          }
-        }
-        setBuffer(""); // Clear buffer after Enter key
-      } else if (e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
+      // Check if the key pressed is a single printable character (not a modifier key like Ctrl, Alt, Shift)
+      if (e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
+        // Append character to the buffer
         setBuffer(prev => prev + e.key);
-      }
 
-      setLastKeyTime(now); 
+        
+        timeoutRef.current = setTimeout(() => {
+          processScannedSku(buffer + e.key); 
+        }, SCAN_DEBOUNCE_TIME);
+      }
     };
 
     window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [buffer, lastKeyTime]); 
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      // Clear timeout on component unmount to prevent memory leaks
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, [buffer, processScannedSku]);
 
   return (
     <>
@@ -102,7 +110,7 @@ const BarcodeScanner = () => {
         </div>
 
         <p className="mt-2 text-sm text-gray-200">
-          Ready for keyboard-based barcode scanner input (or manual typing followed by Enter).
+          Ready for keyboard-based barcode scanner input (auto-detects scan completion).
         </p>
         
         {/* SDK Status for camera scanning, if applicable */}
@@ -112,7 +120,6 @@ const BarcodeScanner = () => {
       </div>
       <hr className="mt-6 rounded border-gray-700" />
       
-      {/* Pass the unique scanned SKUs to the product list component */}
       <BarCodeProductList scannedSkusFromScanner={scannedSkusFromScanner} />
     </>
   );
