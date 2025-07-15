@@ -583,7 +583,7 @@ const ProductManagementPage = () => {
                     </td>
                     <td className="px-4 py-3 font-medium text-white whitespace-nowrap flex items-center">
                       <ImageWithFallback
-                        src={product.imageUrl?.url}
+                        src={product?.imageUrl}
                         fallbackSrc={`https://placehold.co/40x40/777/FFF?text=${
                           product.title ? product.title.substring(0, 1) : "P"
                         }`}
