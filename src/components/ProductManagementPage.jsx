@@ -13,6 +13,8 @@ import {
   CheckCircle,
   ChevronLeft,
   ChevronRight,
+  Eye,
+  EyeIcon,
 } from "lucide-react";
 import { apiClient, BASE_URL } from "../config/api/api";
 import { ImageWithFallback, Pagination } from "./common";
@@ -21,7 +23,8 @@ import { getListedPlatformNames, getStatusColor } from "../utils/helpers";
 import axios from "axios";
 import { useAuth } from "../hooks/useAuth";
 import { PERMISSIONS, PRODUCT_STATUSES } from "../constants";
-
+import { Link } from "react-router-dom";
+const ShopUrl = process.env.FRONTEND_URL || "http://localhost:3000";
 const BASE_API_URL = `${BASE_URL}/api`; // Ensure this matches your backend URL
 
 // Main Product Management Page Component
@@ -729,6 +732,9 @@ const ProductManagementPage = () => {
                               >
                                 <DollarSign size={16} />
                               </button>
+                              <Link target="_blank" to={`${ShopUrl}/shop/product/${product.id}`}>
+                                <EyeIcon />
+                              </Link>
                             </>
                           )}
                         </div>
