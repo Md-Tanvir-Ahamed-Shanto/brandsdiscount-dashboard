@@ -469,6 +469,9 @@ const BarCodeProductList = ({ scannedSkusFromScanner = [] }) => {
             <thead>
               <tr className="bg-gray-600">
                 <th className="border border-gray-500 px-4 py-2 text-left text-white text-sm">
+                  Image
+                </th>
+                <th className="border border-gray-500 px-4 py-2 text-left text-white text-sm">
                   SKU
                 </th>
                 <th className="border border-gray-500 px-4 py-2 text-left text-white text-sm">
@@ -500,6 +503,16 @@ const BarCodeProductList = ({ scannedSkusFromScanner = [] }) => {
                   key={product?.sku}
                   className="bg-gray-800 hover:bg-gray-700 transition-colors"
                 >
+                  <td className="border border-gray-700 px-4 py-2">
+                    <ImageWithFallback
+                      src={product?.imageUrl}
+                      fallbackSrc={`https://placehold.co/40x40/777/FFF?text=${
+                        product.title ? product.title.substring(0, 1) : "P"
+                      }`}
+                      alt={product.title}
+                      className="w-10 h-10 rounded-md object-cover"
+                    />
+                  </td>
                   <td className="border border-gray-700 px-4 py-2 font-medium text-white text-sm">
                     {product?.sku}
                   </td>
