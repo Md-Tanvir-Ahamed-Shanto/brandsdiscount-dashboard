@@ -177,14 +177,15 @@ const SizeManagement = () => {
     // --- Component JSX (UI) ---
     return (
         <div className="p-4 md:p-6 text-gray-300">
-            <h2 className="text-2xl font-semibold text-white mb-6">Size Management</h2>
+            <h2 className="text-2xl font-semibold text-white mb-6">Size Type Management</h2>
+
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* Add New Size Section (Admin-only) */}
 
                     <div className="bg-gray-800 p-6 rounded-xl shadow-lg">
                         <h3 className="text-xl font-semibold text-white mb-4 flex items-center">
-                            <PlusCircle size={20} className="mr-2 text-green-400" /> Add New Size
+                            <PlusCircle size={20} className="mr-2 text-green-400" /> Add New Size Type
                         </h3>
                         <form onSubmit={handleAddSizeSubmit} className="space-y-4">
                             <div>
@@ -202,7 +203,7 @@ const SizeManagement = () => {
                                 type="submit"
                                 className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg flex items-center justify-center"
                             >
-                                <PlusCircle size={20} className="mr-2" /> Add Size
+                                <PlusCircle size={20} className="mr-2" /> Add Size Type
                             </button>
                         </form>
                     </div>
@@ -211,7 +212,7 @@ const SizeManagement = () => {
                 {/* Existing Sizes List */}
                 <div className="bg-gray-800 p-6 rounded-xl shadow-lg">
                     <h3 className="text-xl font-semibold text-white mb-4">
-                        Existing Sizes ({sizes.length})
+                        Existing Sizes Type ({sizes.length})
                     </h3>
                     <div className="space-y-3 max-h-96 overflow-y-auto">
                         {sizes.length > 0 ? (

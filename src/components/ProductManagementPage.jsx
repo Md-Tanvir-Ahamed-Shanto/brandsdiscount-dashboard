@@ -24,7 +24,7 @@ import axios from "axios";
 import { useAuth } from "../hooks/useAuth";
 import { PERMISSIONS, PRODUCT_STATUSES } from "../constants";
 import { Link } from "react-router-dom";
-const ShopUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+const ShopUrl = "http://localhost:3000";
 const BASE_API_URL = `${BASE_URL}/api`; // Ensure this matches your backend URL
 
 // Main Product Management Page Component
