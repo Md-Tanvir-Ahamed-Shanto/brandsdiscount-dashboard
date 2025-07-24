@@ -1,6 +1,6 @@
 import { PlusCircle } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
-import { PRODUCT_STATUSES } from "../../constants";
+import { PRODUCT_STATUSES } from "../../constants"; // Assuming this path is correct
 
 const AddEditProductModal = ({
   isOpen,
@@ -11,32 +11,31 @@ const AddEditProductModal = ({
   sizeTypes,
   loading,
 }) => {
+  const [variants, setVariants] = useState([]);
   const [formData, setFormData] = useState({
     title: "",
     brandName: "",
-    color: "",
+    color: "", // Re-added to main product formData
     sku: "",
     images: [], // This will hold existing image objects {id, url}
     itemLocation: "",
     sizeId: "",
     sizeType: "",
     sizes: "",
-    postName: "",
     categoryId: "",
     subCategoryId: "",
     parentCategoryId: "",
-    ebayId: "",
-    wallmartId: "",
-    sheinId: "",
-    woocommerceId: "",
-    regularPrice: "",
-    salePrice: "",
-    platFormPrice: "",
-    discountPercent: "",
-    stockQuantity: "",
+    regularPrice: "", // Re-added to main product formData
+    salePrice: "", // Re-added to main product formData
+    stockQuantity: "", // Re-added to main product formData
+    toggleFirstDeal: true,
     condition: "New", // Default condition
     description: "",
     status: "Draft", // Default status
+    // New eBay boolean flags
+    ebayOne: false,
+    ebayTwo: false,
+    ebayThree: false,
   });
   const [validationErrors, setValidationErrors] = useState({});
   const [imageFiles, setImageFiles] = useState([]); // This will hold new File objects
@@ -45,63 +44,76 @@ const AddEditProductModal = ({
   useEffect(() => {
     if (isOpen) {
       if (productData) {
+        // Set variants if they exist
+        if (productData.variants && Array.isArray(productData.variants)) {
+          setVariants(
+            productData.variants.map((variant) => ({
+              ...variant,
+              // Ensure prices and quantity are stringified for input value consistency
+              regularPrice: variant.regularPrice?.toString() || "",
+              salePrice: variant.salePrice?.toString() || "",
+              quantity: variant.quantity?.toString() || "0",
+            }))
+          );
+        } else {
+          setVariants([]);
+        }
+
         // Populate form for editing
         setFormData({
           title: productData.title || "",
           brandName: productData.brandName || "",
-          color: productData.color || "",
+          color: productData.color || "", // Populate main product color
           sku: productData.sku || "",
           images: productData.images || [], // Load existing images
           itemLocation: productData.itemLocation || "",
           sizeId: productData.sizeId || "",
           sizeType: productData.sizeType || "",
           sizes: productData.sizes || "",
-          postName: productData.postName || "",
           categoryId: productData.category?.id || "",
           subCategoryId: productData.subCategory?.id || "",
           parentCategoryId: productData.parentCategory?.id || "",
-          ebayId: productData.ebayId || "",
-          wallmartId: productData.wallmartId || "",
-          sheinId: productData.sheinId || "",
-          woocommerceId: productData.woocommerceId || "",
-          regularPrice: productData.regularPrice?.toString() || "",
-          salePrice: productData.salePrice?.toString() || "",
-          platFormPrice: productData.platFormPrice?.toString() || "",
-          discountPercent: productData.discountPercent?.toString() || "",
-          stockQuantity: productData.stockQuantity?.toString() || "",
+          regularPrice: productData.regularPrice?.toString() || "", // Populate main product regularPrice
+          salePrice: productData.salePrice?.toString() || "", // Populate main product salePrice
+          stockQuantity: productData.stockQuantity?.toString() || "", // Populate main product stockQuantity
+          toggleFirstDeal: productData.toggleFirstDeal ?? true,
           condition: productData.condition || "New",
           description: productData.description || "",
           status: productData.status || "Active",
+          // Populate new eBay boolean flags
+          ebayOne: productData.ebayOne ?? false,
+          ebayTwo: productData.ebayTwo ?? false,
+          ebayThree: productData.ebayThree ?? false,
         });
       } else {
+        // Reset variants
+        setVariants([]);
+
         // Reset form for adding
         setFormData({
           title: "",
           brandName: "",
-          color: "",
+          color: "", // Reset main product color
           sku: "",
           images: [], // Reset existing images
           itemLocation: "",
           sizeId: "",
           sizeType: "",
           sizes: "",
-          postName: "",
           categoryId: "",
           subCategoryId: "",
           parentCategoryId: "",
-          ebayId: "",
-          wallmartId: "",
-          sheinId: "",
-          woocommerceId: "",
-          regularPrice: "",
-          salePrice: "",
-          platFormPrice: "",
+          regularPrice: "", // Reset main product regularPrice
+          salePrice: "", // Reset main product salePrice
+          stockQuantity: "", // Reset main product stockQuantity
           toggleFirstDeal: true,
-          discountPercent: "",
-          stockQuantity: "",
           condition: "New",
           description: "",
-          status: "Active",
+          status: "Draft",
+          // Reset new eBay boolean flags
+          ebayOne: false,
+          ebayTwo: false,
+          ebayThree: false,
         });
       }
       setImageFiles([]); // Clear new image files
@@ -121,7 +133,6 @@ const AddEditProductModal = ({
   const handleImageChange = (e) => {
     if (e.target.files) {
       const newFiles = Array.from(e.target.files);
-      console.log("Newly selected files:", newFiles);
       setImageFiles((prevFiles) => [...prevFiles, ...newFiles]);
     }
   };
@@ -157,29 +168,79 @@ const AddEditProductModal = ({
         parentCategoryId: "",
       }));
     }
+    setValidationErrors((prev) => ({ ...prev, category: "" })); // Clear category error
   };
 
   const validateForm = () => {
     const errors = {};
     if (!formData.title) errors.title = "Title is required.";
     if (!formData.sku) errors.sku = "SKU is required.";
-    // Basic price validation (add more robust validation if needed)
-    if (
-      isNaN(parseFloat(formData.regularPrice)) ||
-      parseFloat(formData.regularPrice) <= 0
-    ) {
-      errors.regularPrice = "Regular Price must be a positive number.";
+
+    // Validation for main product price/quantity if no variants are added
+    if (variants.length === 0) {
+      if (!formData.regularPrice || isNaN(parseFloat(formData.regularPrice)) || parseFloat(formData.regularPrice) <= 0) {
+        errors.regularPrice = "Regular Price is required for main product if no variants.";
+      }
+      if (formData.stockQuantity === "" || isNaN(parseInt(formData.stockQuantity)) || parseInt(formData.stockQuantity) < 0) {
+        errors.stockQuantity = "Stock Quantity is required for main product if no variants.";
+      }
     }
-    if (
-      formData.stockQuantity === "" ||
-      isNaN(parseInt(formData.stockQuantity)) ||
-      parseInt(formData.stockQuantity) < 0
-    ) {
-      errors.stockQuantity = "Stock Quantity must be a non-negative number.";
+
+    // Validate variants
+    const variantErrors = [];
+    variants.forEach((variant, index) => {
+      const variantError = {};
+      if (!variant.color) variantError.color = "Color is required";
+      if (!variant.sizeType) variantError.sizeType = "Size Type is required";
+      if (
+        variant.quantity === "" ||
+        isNaN(parseInt(variant.quantity)) ||
+        parseInt(variant.quantity) < 0
+      ) {
+        variantError.quantity = "Quantity must be a non-negative number";
+      }
+      if (
+        isNaN(parseFloat(variant.regularPrice)) ||
+        parseFloat(variant.regularPrice) <= 0
+      ) {
+        variantError.regularPrice = "Regular Price is required.";
+      }
+      if (Object.keys(variantError).length > 0) {
+        variantErrors[index] = variantError;
+      }
+    });
+
+    if (variantErrors.length > 0) {
+      errors.variants = variantErrors;
     }
 
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
+  };
+
+  const handleAddVariant = () => {
+    setVariants([
+      ...variants,
+      {
+        color: "",
+        sizeType: "",
+        customSize: "",
+        quantity: "0", // Initialize as string to match input value type
+        skuSuffix: "",
+        regularPrice: "", // Always include regular price for new variants
+        salePrice: "", // Always include sale price for new variants
+      },
+    ]);
+  };
+
+  const handleRemoveVariant = (index) => {
+    setVariants(variants.filter((_, i) => i !== index));
+  };
+
+  const handleVariantChange = (index, field, value) => {
+    const newVariants = [...variants];
+    newVariants[index][field] = value;
+    setVariants(newVariants);
   };
 
   const handleSubmit = (e) => {
@@ -191,41 +252,65 @@ const AddEditProductModal = ({
 
     const dataToSave = new FormData();
 
-    // Append all form data fields except 'images'
+    // Prepare product data (non-image, non-variant fields)
+    const productCoreData = {};
     Object.keys(formData).forEach((key) => {
       if (key !== "images") {
-        // Handle boolean conversion for 'toggleFirstDeal' if it comes as a string
-        if (key === "toggleFirstDeal") {
-          dataToSave.append(key, formData[key] ? "true" : "false");
+        if (key === "toggleFirstDeal" || key === "ebayOne" || key === "ebayTwo" || key === "ebayThree") {
+          productCoreData[key] = formData[key] ? true : false; // Send as boolean
+        } else if (
+          (key === "regularPrice" || key === "salePrice") && formData[key] !== ""
+        ) {
+          productCoreData[key] = parseFloat(formData[key]); // Convert to number if not empty
+        } else if (key === "stockQuantity" && formData[key] !== "") {
+          productCoreData[key] = parseInt(formData[key]); // Convert to number if not empty
         } else {
-          dataToSave.append(key, formData[key]);
+          productCoreData[key] = formData[key];
         }
       }
     });
 
-    // --- IMPORTANT CHANGE HERE ---
-    // Append existing images under a new field 'existingImages' as a JSON string
-    // This array contains objects { id: "cf_id", url: "cf_url" }
+    // Handle optional numeric fields to send null if empty string
+    if (productCoreData.regularPrice === "") productCoreData.regularPrice = null;
+    if (productCoreData.salePrice === "") productCoreData.salePrice = null;
+    if (productCoreData.stockQuantity === "") productCoreData.stockQuantity = null;
+
+
+    // Append existing images JSON
     dataToSave.append("existingImages", JSON.stringify(formData.images));
 
-    // Append new image files under the 'images' field (for Multer)
-    console.log("imageFiles before appending:", imageFiles);
+    // Append new image files
     imageFiles.forEach((file) => {
-      dataToSave.append("images", file); // Multer will pick these up
+      dataToSave.append("images", file);
     });
 
-    // For debugging FormData content (uncomment to use)
-    console.log("Inspecting FormData content:");
+    // Append variants data as JSON string
+    const variantsForBackend = variants.map(variant => ({
+      ...(variant.id && { id: variant.id }),
+      color: variant.color,
+      sizeType: variant.sizeType,
+      customSize: variant.customSize || null, // Send null if empty
+      quantity: parseInt(variant.quantity),
+      skuSuffix: variant.skuSuffix || null, // Send null if empty
+      regularPrice: parseFloat(variant.regularPrice),
+      salePrice: variant.salePrice ? parseFloat(variant.salePrice) : null, // Handle optional salePrice
+    }));
+    dataToSave.append("variants", JSON.stringify(variantsForBackend));
+
+    // Append the core product data (excluding images and variants which are handled above)
+    dataToSave.append("productData", JSON.stringify(productCoreData));
+
+
+    console.log("Inspecting FormData content before onSave:");
     for (let pair of dataToSave.entries()) {
-      // For File objects, pair[1] will be the File object itself
       console.log(
         pair[0] + ": " + (pair[1] instanceof File ? pair[1].name : pair[1])
       );
     }
 
     onSave(dataToSave);
-    console.log("FormData prepared:", dataToSave);
   };
+
   if (!isOpen) return null;
 
   return (
@@ -288,31 +373,30 @@ const AddEditProductModal = ({
             )}
           </div>
           <div className="flex flex-col">
-            <label htmlFor="sku" className="text-gray-300 text-sm mb-1">
-              Brand Name 
+            <label htmlFor="brandName" className="text-gray-300 text-sm mb-1">
+              Brand Name
             </label>
             <input
               type="text"
               id="brandName"
               name="brandName"
-              value={formData?.brandName || ""}
+              value={formData.brandName}
               onChange={handleChange}
               className={`bg-gray-700 text-white rounded-lg p-2 focus:ring-indigo-500 focus:border-indigo-500`}
             />
-            
-            
           </div>
           <div className="flex flex-col">
             <label htmlFor="color" className="text-gray-300 text-sm mb-1">
-              Color
+              Main Product Color
             </label>
             <input
               type="text"
               id="color"
               name="color"
-              value={formData?.color || ""}
+              value={formData.color}
               onChange={handleChange}
               className="bg-gray-700 text-white rounded-lg p-2 focus:ring-indigo-500 focus:border-indigo-500"
+              placeholder="e.g., Red (default color)"
             />
           </div>
           <div className="flex flex-col">
@@ -348,9 +432,87 @@ const AddEditProductModal = ({
             </select>
           </div>
 
-          {/* Category & Size Information */}
+          {/* Main Product Pricing & Stock */}
           <div className="col-span-1 md:col-span-2 text-white font-semibold mt-4 mb-2">
-            Category & Size
+            Main Product Pricing & Stock (Defaults if no variants)
+          </div>
+          <div className="flex flex-col">
+            <label htmlFor="regularPrice" className="text-gray-300 text-sm mb-1">
+              Regular Price
+              {variants.length === 0 && <span className="text-red-500">*</span>}
+            </label>
+            <input
+              type="number"
+              step="0.01"
+              id="regularPrice"
+              name="regularPrice"
+              value={formData.regularPrice}
+              onChange={handleChange}
+              className={`bg-gray-700 text-white rounded-lg p-2 focus:ring-indigo-500 focus:border-indigo-500 ${
+                validationErrors.regularPrice ? "border-red-500" : ""
+              }`}
+              placeholder="Enter regular price"
+            />
+            {validationErrors.regularPrice && (
+              <span className="text-red-500 text-xs mt-1">
+                {validationErrors.regularPrice}
+              </span>
+            )}
+          </div>
+          <div className="flex flex-col">
+            <label htmlFor="salePrice" className="text-gray-300 text-sm mb-1">
+              Sale Price
+            </label>
+            <input
+              type="number"
+              step="0.01"
+              id="salePrice"
+              name="salePrice"
+              value={formData.salePrice}
+              onChange={handleChange}
+              className="bg-gray-700 text-white rounded-lg p-2 focus:ring-indigo-500 focus:border-indigo-500"
+              placeholder="Enter sale price (optional)"
+            />
+          </div>
+          <div className="flex flex-col">
+            <label htmlFor="stockQuantity" className="text-gray-300 text-sm mb-1">
+              Stock Quantity
+              {variants.length === 0 && <span className="text-red-500">*</span>}
+            </label>
+            <input
+              type="number"
+              id="stockQuantity"
+              name="stockQuantity"
+              value={formData.stockQuantity}
+              onChange={handleChange}
+              className={`bg-gray-700 text-white rounded-lg p-2 focus:ring-indigo-500 focus:border-indigo-500 ${
+                validationErrors.stockQuantity ? "border-red-500" : ""
+              }`}
+              min="0"
+            />
+            {validationErrors.stockQuantity && (
+              <span className="text-red-500 text-xs mt-1">
+                {validationErrors.stockQuantity}
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-2 mt-2">
+            <input
+              type="checkbox"
+              id="toggleFirstDeal"
+              name="toggleFirstDeal"
+              checked={formData.toggleFirstDeal}
+              onChange={handleChange}
+              className="w-4 h-4"
+            />
+            <label htmlFor="toggleFirstDeal" className="text-gray-300 text-sm">
+              Apply 10% Discount for First Deal
+            </label>
+          </div>
+
+          {/* Category & Size Information (Main Product Info) */}
+          <div className="col-span-1 md:col-span-2 text-white font-semibold mt-4 mb-2">
+            Category & Size (Main Product Info)
           </div>
           <div className="flex flex-col">
             <label htmlFor="category" className="text-gray-300 text-sm mb-1">
@@ -380,7 +542,7 @@ const AddEditProductModal = ({
           </div>
           <div className="flex flex-col">
             <label htmlFor="sizes" className="text-gray-300 text-sm mb-1">
-              Sizes (Placeholder)
+              Sizes (General)
             </label>
             <input
               type="text"
@@ -389,11 +551,12 @@ const AddEditProductModal = ({
               value={formData.sizes}
               onChange={handleChange}
               className="bg-gray-700 text-white rounded-lg p-2 focus:ring-indigo-500 focus:border-indigo-500"
+              placeholder="e.g., S, M, L (general product sizes)"
             />
           </div>
           <div className="flex flex-col">
             <label htmlFor="sizeType" className="text-gray-300 text-sm mb-1">
-              Size Type
+              Size Type (General)
             </label>
             <select
               id="sizeType"
@@ -410,200 +573,54 @@ const AddEditProductModal = ({
               ))}
             </select>
           </div>
-          <div className="flex flex-col">
-            <label htmlFor="postName" className="text-gray-300 text-sm mb-1">
-              Post Name
-            </label>
-            <input
-              type="text"
-              id="postName"
-              name="postName"
-              value={formData.postName}
-              onChange={handleChange}
-              className="bg-gray-700 text-white rounded-lg p-2 focus:ring-indigo-500 focus:border-indigo-500"
-            />
-          </div>
 
-          {/* Pricing & Inventory */}
+          {/* New Platform Availability Section */}
           <div className="col-span-1 md:col-span-2 text-white font-semibold mt-4 mb-2">
-            Pricing & Inventory
+            Platform Availability
           </div>
-          <div className="flex flex-col">
-            <label
-              htmlFor="regularPrice"
-              className="text-gray-300 text-sm mb-1"
-            >
-              Regular Price ($) <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="number"
-              step="0.01"
-              id="regularPrice"
-              name="regularPrice"
-              value={formData.regularPrice}
-              onChange={handleChange}
-              className={`bg-gray-700 text-white rounded-lg p-2 focus:ring-indigo-500 focus:border-indigo-500 ${
-                validationErrors.regularPrice ? "border-red-500" : ""
-              }`}
-            />
-            {validationErrors.regularPrice && (
-              <span className="text-red-500 text-xs mt-1">
-                {validationErrors.regularPrice}
-              </span>
-            )}
+          <div className="col-span-1 md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="ebayOne"
+                name="ebayOne"
+                checked={formData.ebayOne}
+                onChange={handleChange}
+                className="w-4 h-4"
+              />
+              <label htmlFor="ebayOne" className="text-gray-300 text-sm">
+                eBay (Platform 1)
+              </label>
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="ebayTwo"
+                name="ebayTwo"
+                checked={formData.ebayTwo}
+                onChange={handleChange}
+                className="w-4 h-4"
+              />
+              <label htmlFor="ebayTwo" className="text-gray-300 text-sm">
+                eBay (Platform 2)
+              </label>
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="ebayThree"
+                name="ebayThree"
+                checked={formData.ebayThree}
+                onChange={handleChange}
+                className="w-4 h-4"
+              />
+              <label htmlFor="ebayThree" className="text-gray-300 text-sm">
+                eBay (Platform 3)
+              </label>
+            </div>
           </div>
-          <div className="flex flex-col">
-            <label htmlFor="salePrice" className="text-gray-300 text-sm mb-1">
-              Sale Price ($)
-            </label>
-            <input
-              type="number"
-              step="0.01"
-              id="salePrice"
-              name="salePrice"
-              value={formData.salePrice}
-              onChange={handleChange}
-              className={`bg-gray-700 text-white rounded-lg p-2 focus:ring-indigo-500 focus:border-indigo-500 ${
-                validationErrors.salePrice ? "border-red-500" : ""
-              }`}
-            />
-            {validationErrors.salePrice && (
-              <span className="text-red-500 text-xs mt-1">
-                {validationErrors.salePrice}
-              </span>
-            )}
-          </div>
-          <div className="flex flex-col">
-            <label
-              htmlFor="platFormPrice"
-              className="text-gray-300 text-sm mb-1"
-            >
-              Platform Price ($)
-            </label>
-            <input
-              type="number"
-              step="0.01"
-              id="platFormPrice"
-              name="platFormPrice"
-              value={formData.platFormPrice}
-              onChange={handleChange}
-              className={`bg-gray-700 text-white rounded-lg p-2 focus:ring-indigo-500 focus:border-indigo-500 ${
-                validationErrors.platFormPrice ? "border-red-500" : ""
-              }`}
-            />
-            {validationErrors.platFormPrice && (
-              <span className="text-red-500 text-xs mt-1">
-                {validationErrors.platFormPrice}
-              </span>
-            )}
-          </div>
-          <div className="flex flex-col">
-            <label
-              htmlFor="discountPercent"
-              className="text-gray-300 text-sm mb-1"
-            >
-              Discount Percent (%)
-            </label>
-            <input
-              type="number"
-              step="0.01"
-              id="discountPercent"
-              name="discountPercent"
-              value={formData.discountPercent}
-              onChange={handleChange}
-              className={`bg-gray-700 text-white rounded-lg p-2 focus:ring-indigo-500 focus:border-indigo-500 ${
-                validationErrors.discountPercent ? "border-red-500" : ""
-              }`}
-            />
-            {validationErrors.discountPercent && (
-              <span className="text-red-500 text-xs mt-1">
-                {validationErrors.discountPercent}
-              </span>
-            )}
-          </div>
-          <div className="flex flex-col">
-            <label
-              htmlFor="stockQuantity"
-              className="text-gray-300 text-sm mb-1"
-            >
-              Stock Quantity <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="number"
-              id="stockQuantity"
-              name="stockQuantity"
-              value={formData.stockQuantity}
-              onChange={handleChange}
-              className={`bg-gray-700 text-white rounded-lg p-2 focus:ring-indigo-500 focus:border-indigo-500 ${
-                validationErrors.stockQuantity ? "border-red-500" : ""
-              }`}
-            />
-            {validationErrors.stockQuantity && (
-              <span className="text-red-500 text-xs mt-1">
-                {validationErrors.stockQuantity}
-              </span>
-            )}
-          </div>
+          {/* End New Platform Availability Section */}
 
-          {/* Platforms & Status */}
-          <div className="col-span-1 md:col-span-2 text-white font-semibold mt-4 mb-2">
-            Platforms & Status
-          </div>
-          <div className="flex flex-col">
-            <label htmlFor="ebayId" className="text-gray-300 text-sm mb-1">
-              eBay ID
-            </label>
-            <input
-              type="text"
-              id="ebayId"
-              name="ebayId"
-              value={formData.ebayId}
-              onChange={handleChange}
-              className="bg-gray-700 text-white rounded-lg p-2 focus:ring-indigo-500 focus:border-indigo-500"
-            />
-          </div>
-          <div className="flex flex-col">
-            <label htmlFor="wallmartId" className="text-gray-300 text-sm mb-1">
-              Walmart ID
-            </label>
-            <input
-              type="text"
-              id="wallmartId"
-              name="wallmartId"
-              value={formData.wallmartId}
-              onChange={handleChange}
-              className="bg-gray-700 text-white rounded-lg p-2 focus:ring-indigo-500 focus:border-indigo-500"
-            />
-          </div>
-          <div className="flex flex-col">
-            <label htmlFor="sheinId" className="text-gray-300 text-sm mb-1">
-              Shein ID
-            </label>
-            <input
-              type="text"
-              id="sheinId"
-              name="sheinId"
-              value={formData.sheinId}
-              onChange={handleChange}
-              className="bg-gray-700 text-white rounded-lg p-2 focus:ring-indigo-500 focus:border-indigo-500"
-            />
-          </div>
-          <div className="flex flex-col">
-            <label
-              htmlFor="woocommerceId"
-              className="text-gray-300 text-sm mb-1"
-            >
-              WooCommerce ID
-            </label>
-            <input
-              type="text"
-              id="woocommerceId"
-              name="woocommerceId"
-              value={formData.woocommerceId}
-              onChange={handleChange}
-              className="bg-gray-700 text-white rounded-lg p-2 focus:ring-indigo-500 focus:border-indigo-500"
-            />
-          </div>
           <div className="flex flex-col">
             <label htmlFor="status" className="text-gray-300 text-sm mb-1">
               Status
@@ -653,7 +670,6 @@ const AddEditProductModal = ({
                   className="relative w-20 h-20 group"
                 >
                   <img
-                    // Ensure you're accessing the correct URL property, assuming img is {id, url}
                     src={img.url || img}
                     alt={`Product image ${index}`}
                     className="w-full h-full object-cover rounded-md"
@@ -685,6 +701,179 @@ const AddEditProductModal = ({
                 </div>
               ))}
             </div>
+          </div>
+
+          {/* Product Variations */}
+          <div className="col-span-1 md:col-span-2 text-white font-semibold mt-4 mb-2">
+            Product Variations (Overrides main product details)
+          </div>
+          <div className="col-span-1 md:col-span-2">
+            <div className="mb-4">
+              <button
+                type="button"
+                onClick={handleAddVariant}
+                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2"
+              >
+                <PlusCircle size={20} /> Add Variant
+              </button>
+            </div>
+            {variants.map((variant, index) => (
+              <div
+                key={index}
+                className="bg-gray-800 p-4 rounded-lg mb-4 relative"
+              >
+                <button
+                  type="button"
+                  onClick={() => handleRemoveVariant(index)}
+                  className="absolute top-2 right-2 text-gray-400 hover:text-white"
+                >
+                  <PlusCircle size={20} className="rotate-45" />
+                </button>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="flex flex-col">
+                    <label className="text-gray-300 text-sm mb-1">
+                      Color<span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={variant.color}
+                      onChange={(e) =>
+                        handleVariantChange(index, "color", e.target.value)
+                      }
+                      className={`bg-gray-700 text-white rounded-lg p-2 ${
+                        validationErrors.variants?.[index]?.color
+                          ? "border-red-500"
+                          : ""
+                      }`}
+                      placeholder="Enter color"
+                    />
+                    {validationErrors.variants?.[index]?.color && (
+                      <span className="text-red-500 text-xs mt-1">
+                        {validationErrors.variants[index].color}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex flex-col">
+                    <label className="text-gray-300 text-sm mb-1">
+                      Size Type<span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      value={variant.sizeType}
+                      onChange={(e) =>
+                        handleVariantChange(index, "sizeType", e.target.value)
+                      }
+                      className={`bg-gray-700 text-white rounded-lg p-2 ${
+                        validationErrors.variants?.[index]?.sizeType
+                          ? "border-red-500"
+                          : ""
+                      }`}
+                    >
+                      <option value="">Select</option>
+                      {sizeTypes.map((type) => (
+                        <option key={type?.id} value={type.name}>
+                          {type.name}
+                        </option>
+                      ))}
+                    </select>
+                    {validationErrors.variants?.[index]?.sizeType && (
+                      <span className="text-red-500 text-xs mt-1">
+                        {validationErrors.variants[index].sizeType}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex flex-col">
+                    <label className="text-gray-300 text-sm mb-1">
+                      Custom Size
+                    </label>
+                    <input
+                      type="text"
+                      value={variant.customSize}
+                      onChange={(e) =>
+                        handleVariantChange(index, "customSize", e.target.value)
+                      }
+                      className="bg-gray-700 text-white rounded-lg p-2"
+                      placeholder="Custom size (optional)"
+                    />
+                  </div>
+                  <div className="flex flex-col">
+                    <label className="text-gray-300 text-sm mb-1">
+                      Quantity<span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="number"
+                      value={variant.quantity}
+                      onChange={(e) =>
+                        handleVariantChange(index, "quantity", e.target.value)
+                      }
+                      className={`bg-gray-700 text-white rounded-lg p-2 ${
+                        validationErrors.variants?.[index]?.quantity
+                          ? "border-red-500"
+                          : ""
+                      }`}
+                      min="0"
+                    />
+                    {validationErrors.variants?.[index]?.quantity && (
+                      <span className="text-red-500 text-xs mt-1">
+                        {validationErrors.variants[index].quantity}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex flex-col">
+                    <label className="text-gray-300 text-sm mb-1">
+                      SKU Suffix
+                    </label>
+                    <input
+                      type="text"
+                      value={variant.skuSuffix}
+                      onChange={(e) =>
+                        handleVariantChange(index, "skuSuffix", e.target.value)
+                      }
+                      className="bg-gray-700 text-white rounded-lg p-2"
+                      placeholder="SKU suffix"
+                    />
+                  </div>
+                  <div className="flex flex-col">
+                    <label className="text-gray-300 text-sm mb-1">
+                      Regular Price<span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={variant.regularPrice}
+                      onChange={(e) =>
+                        handleVariantChange(index, "regularPrice", e.target.value)
+                      }
+                      className={`bg-gray-700 text-white rounded-lg p-2 ${
+                        validationErrors.variants?.[index]?.regularPrice
+                          ? "border-red-500"
+                          : ""
+                      }`}
+                      placeholder="Enter regular price"
+                    />
+                    {validationErrors.variants?.[index]?.regularPrice && (
+                      <span className="text-red-500 text-xs mt-1">
+                        {validationErrors.variants[index].regularPrice}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex flex-col">
+                    <label className="text-gray-300 text-sm mb-1">
+                      Sale Price
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={variant.salePrice}
+                      onChange={(e) =>
+                        handleVariantChange(index, "salePrice", e.target.value)
+                      }
+                      className="bg-gray-700 text-white rounded-lg p-2"
+                      placeholder="Enter sale price (optional)"
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
 
           {/* Description */}
@@ -721,7 +910,7 @@ const AddEditProductModal = ({
                   loading && "cursor-not-allowed"
                 }`}
               >
-                Submiting...
+                Submitting...
               </button>
             ) : (
               <button
