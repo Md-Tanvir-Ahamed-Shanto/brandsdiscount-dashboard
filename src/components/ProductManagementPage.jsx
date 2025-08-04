@@ -24,7 +24,7 @@ import axios from "axios";
 import { useAuth } from "../hooks/useAuth";
 import { PERMISSIONS, PRODUCT_STATUSES } from "../constants";
 import { Link } from "react-router-dom";
-const ShopUrl = "http://localhost:3000";
+const ShopUrl = "http://localhost:5000";
 const BASE_API_URL = `${BASE_URL}/api`; // Ensure this matches your backend URL
 
 // Main Product Management Page Component
@@ -559,9 +559,6 @@ const ProductManagementPage = () => {
                     Status
                   </th>
                   <th scope="col" className="px-4 py-3">
-                    Platforms
-                  </th>
-                  <th scope="col" className="px-4 py-3">
                     Actions
                   </th>
                 </tr>
@@ -684,9 +681,7 @@ const ProductManagementPage = () => {
                           : product.status}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-xs">
-                      {getListedPlatformNames(product.listedOn, product.status)}
-                    </td>
+                   
                     <td className="px-4 py-3">
                       {(canEditProducts ||
                         (currentUser.role === "WarehouseUploader" &&

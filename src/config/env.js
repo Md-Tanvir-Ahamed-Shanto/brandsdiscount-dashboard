@@ -1,6 +1,6 @@
 // export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001/';
 // export const SITE_DOMAIN =
-//     process.env.NEXT_PUBLIC_SITE_DOMAIN || 'http://localhost:3000/';
+//     process.env.NEXT_PUBLIC_SITE_DOMAIN || 'http://localhost:5000/';
 
 // export const STRIPE_SECRET_KEY =
 //     process.env.NEXT_PUBLIC_STRIPE_SECRET_KEY || '';

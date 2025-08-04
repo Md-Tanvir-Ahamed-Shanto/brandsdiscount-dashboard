@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 const apiClient = axios.create({
-  baseURL: 'http://localhost:3000',
+  baseURL: 'http://localhost:5000',
   timeout: 10000,
   // headers: {
   //   'Content-Type': 'application/json',
@@ -34,7 +34,7 @@ apiClient.interceptors.response.use(
   }
 );
 
-const BASE_URL = 'http://localhost:3000';
+const BASE_URL = 'http://localhost:5000';
 
 export { apiClient, BASE_URL };
 
