@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Lock, Mail, Store, CreditCard, BarChart3 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import Logo from '../assets/logo/BD Logo Black.png';
+import Logo from '../assets/logo/BDLogoWhite.png';
 
 function Login() {
   const [credentials, setCredentials] = useState({
