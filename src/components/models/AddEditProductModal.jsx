@@ -48,11 +48,15 @@ const AddEditProductModal = ({
         if (productData.variants && Array.isArray(productData.variants)) {
           setVariants(
             productData.variants.map((variant) => ({
-              ...variant,
-              // Ensure prices and quantity are stringified for input value consistency
-              regularPrice: variant.regularPrice?.toString() || "",
-              salePrice: variant.salePrice?.toString() || "",
-              quantity: variant.quantity?.toString() || "0",
+              id: variant.id,
+              color: variant.color || "",
+              sizeType: variant.sizeType || "",
+              sizes: variant.sizes || "",
+              customSize: variant.customSize || "",
+              quantity: variant.stockQuantity?.toString() || "0",
+              skuSuffix: variant.skuSuffix || "",
+              regularPrice: variant.regularPrice?.toString() || "0",
+              salePrice: variant.salePrice?.toString() || ""
             }))
           );
         } else {
@@ -243,72 +247,69 @@ const AddEditProductModal = ({
     setVariants(newVariants);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateForm()) {
       console.error("Validation failed", validationErrors);
       return;
     }
 
-    const dataToSave = new FormData();
+    // Create FormData object
+    const formDataToSubmit = new FormData();
 
-    // Prepare product data (non-image, non-variant fields)
+    // Prepare core product data
     const productCoreData = {};
     Object.keys(formData).forEach((key) => {
       if (key !== "images") {
         if (key === "toggleFirstDeal" || key === "ebayOne" || key === "ebayTwo" || key === "ebayThree") {
-          productCoreData[key] = formData[key] ? true : false; // Send as boolean
-        } else if (
-          (key === "regularPrice" || key === "salePrice") && formData[key] !== ""
-        ) {
-          productCoreData[key] = parseFloat(formData[key]); // Convert to number if not empty
+          productCoreData[key] = formData[key] ? true : false;
+        } else if ((key === "regularPrice" || key === "salePrice") && formData[key] !== "") {
+          productCoreData[key] = parseFloat(formData[key]);
         } else if (key === "stockQuantity" && formData[key] !== "") {
-          productCoreData[key] = parseInt(formData[key]); // Convert to number if not empty
+          productCoreData[key] = parseInt(formData[key]);
         } else {
           productCoreData[key] = formData[key];
         }
       }
     });
 
-    // Handle optional numeric fields to send null if empty string
+    // Handle optional numeric fields
     if (productCoreData.regularPrice === "") productCoreData.regularPrice = null;
     if (productCoreData.salePrice === "") productCoreData.salePrice = null;
     if (productCoreData.stockQuantity === "") productCoreData.stockQuantity = null;
 
+    // Add core product data
+    formDataToSubmit.append("productData", JSON.stringify(productCoreData));
 
-    // Append existing images JSON
-    dataToSave.append("existingImages", JSON.stringify(formData.images));
+    // Add existing images
+    formDataToSubmit.append("existingImages", JSON.stringify(formData.images));
 
-    // Append new image files
+    // Add new images
     imageFiles.forEach((file) => {
-      dataToSave.append("images", file);
+      formDataToSubmit.append("newImages", file);
     });
 
-    // Append variants data as JSON string
-    const variantsForBackend = variants.map(variant => ({
-      ...(variant.id && { id: variant.id }),
-      color: variant.color,
-      sizeType: variant.sizeType,
-      customSize: variant.customSize || null, // Send null if empty
-      quantity: parseInt(variant.quantity),
-      skuSuffix: variant.skuSuffix || null, // Send null if empty
-      regularPrice: parseFloat(variant.regularPrice),
-      salePrice: variant.salePrice ? parseFloat(variant.salePrice) : null, // Handle optional salePrice
-    }));
-    dataToSave.append("variants", JSON.stringify(variantsForBackend));
-
-    // Append the core product data (excluding images and variants which are handled above)
-    dataToSave.append("productData", JSON.stringify(productCoreData));
-
-
-    console.log("Inspecting FormData content before onSave:");
-    for (let pair of dataToSave.entries()) {
-      console.log(
-        pair[0] + ": " + (pair[1] instanceof File ? pair[1].name : pair[1])
-      );
+    // Add variants data
+    if (variants.length > 0) {
+      const variantsData = variants.map(variant => ({
+        ...(variant.id && { id: variant.id }),
+        color: variant.color,
+        sizeType: variant.sizeType,
+        customSize: variant.customSize || null,
+        stockQuantity: parseInt(variant.quantity),
+        skuSuffix: variant.skuSuffix || null,
+        regularPrice: parseFloat(variant.regularPrice),
+        salePrice: variant.salePrice ? parseFloat(variant.salePrice) : null
+      }));
+      formDataToSubmit.append("variants", JSON.stringify(variantsData));
     }
 
-    onSave(dataToSave);
+    try {
+      await onSave(formDataToSubmit);
+    } catch (error) {
+      console.error("Error saving product:", error);
+      setValidationErrors({ submit: "Failed to save product. Please try again." });
+    }
   };
 
   if (!isOpen) return null;

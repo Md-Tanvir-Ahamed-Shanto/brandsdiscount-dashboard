@@ -24,7 +24,7 @@ import axios from "axios";
 import { useAuth } from "../hooks/useAuth";
 import { PERMISSIONS, PRODUCT_STATUSES } from "../constants";
 import { Link } from "react-router-dom";
-const ShopUrl = "http://localhost:5000";
+const ShopUrl = "http://localhost:3000";
 const BASE_API_URL = `${BASE_URL}/api`; // Ensure this matches your backend URL
 
 // Main Product Management Page Component
@@ -328,6 +328,7 @@ const ProductManagementPage = () => {
   const handleCloseAddEditModal = () => {
     setIsAddEditModalOpen(false);
     setCurrentEditingProductId(null);
+    setLoading(false)
   };
 
   const handleSaveProduct = async (productFormData) => {
@@ -481,12 +482,12 @@ const ProductManagementPage = () => {
             <span className="text-white text-sm font-medium">
               {selectedProducts.size} selected
             </span>
-            <button
+            {/* <button
               onClick={() => handleBulkAction("updateInventoryBulk")}
               className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 rounded text-xs flex items-center"
             >
               <Edit size={14} className="mr-1" /> Qty
-            </button>
+            </button> */}
             <button
               onClick={() => handleBulkAction("setActive", "Active")}
               className="bg-green-500 hover:bg-green-600 text-white px-3 py-1.5 rounded text-xs flex items-center"
