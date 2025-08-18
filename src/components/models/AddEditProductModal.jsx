@@ -12,6 +12,7 @@ const AddEditProductModal = ({
   loading,
 }) => {
   const [variants, setVariants] = useState([]);
+  const [variantImages, setVariantImages] = useState({});
   const [formData, setFormData] = useState({
     title: "",
     brandName: "",
@@ -46,19 +47,26 @@ const AddEditProductModal = ({
       if (productData) {
         // Set variants if they exist
         if (productData.variants && Array.isArray(productData.variants)) {
+          const newVariantImages = {};
           setVariants(
-            productData.variants.map((variant) => ({
-              id: variant.id,
-              color: variant.color || "",
-              sizeType: variant.sizeType || "",
-              sizes: variant.sizes || "",
-              customSize: variant.customSize || "",
-              quantity: variant.stockQuantity?.toString() || "0",
-              skuSuffix: variant.skuSuffix || "",
-              regularPrice: variant.regularPrice?.toString() || "0",
-              salePrice: variant.salePrice?.toString() || ""
-            }))
+            productData.variants.map((variant) => {
+              if (variant.images) {
+                newVariantImages[variant.id] = variant.images;
+              }
+              return {
+                id: variant.id,
+                color: variant.color || "",
+                sizeType: variant.sizeType || "",
+                sizes: variant.sizes || "",
+                customSize: variant.customSize || "",
+                quantity: variant.stockQuantity?.toString() || "0",
+                skuSuffix: variant.skuSuffix || "",
+                regularPrice: variant.regularPrice?.toString() || "0",
+                salePrice: variant.salePrice?.toString() || ""
+              };
+            })
           );
+          setVariantImages(newVariantImages);
         } else {
           setVariants([]);
         }
@@ -90,8 +98,9 @@ const AddEditProductModal = ({
           ebayThree: productData.ebayThree ?? false,
         });
       } else {
-        // Reset variants
+        // Reset variants and variant images
         setVariants([]);
+        setVariantImages({});
 
         // Reset form for adding
         setFormData({
@@ -241,6 +250,27 @@ const AddEditProductModal = ({
     setVariants(variants.filter((_, i) => i !== index));
   };
 
+  const handleVariantImageChange = (variantId, e) => {
+    if (e.target.files) {
+      const newFiles = Array.from(e.target.files);
+      setVariantImages(prev => ({
+        ...prev,
+        [variantId]: [...(prev[variantId] || []), ...newFiles]
+      }));
+    }
+  };
+
+  const handleRemoveVariantImage = (variantId, index) => {
+    setVariantImages(prev => {
+      const newImages = [...(prev[variantId] || [])];
+      newImages.splice(index, 1);
+      return {
+        ...prev,
+        [variantId]: newImages
+      };
+    });
+  };
+
   const handleVariantChange = (index, field, value) => {
     const newVariants = [...variants];
     newVariants[index][field] = value;
@@ -286,22 +316,39 @@ const AddEditProductModal = ({
 
     // Add new images
     imageFiles.forEach((file) => {
-      formDataToSubmit.append("newImages", file);
+      formDataToSubmit.append("productImages", file);
     });
 
-    // Add variants data
+    // Add variants data and their images
     if (variants.length > 0) {
-      const variantsData = variants.map(variant => ({
-        ...(variant.id && { id: variant.id }),
-        color: variant.color,
-        sizeType: variant.sizeType,
-        customSize: variant.customSize || null,
-        stockQuantity: parseInt(variant.quantity),
-        skuSuffix: variant.skuSuffix || null,
-        regularPrice: parseFloat(variant.regularPrice),
-        salePrice: variant.salePrice ? parseFloat(variant.salePrice) : null
-      }));
+      const variantsData = variants.map((variant, idx) => {
+        const variantId = variant.id || `new-${idx}`;
+        const existingUrls = (variantImages[variantId] || []).filter(img => typeof img === "string");
+        return {
+          ...(variant.id && { id: variant.id }),
+          color: variant.color,
+          sizeType: variant.sizeType,
+          customSize: variant.customSize || null,
+          stockQuantity: parseInt(variant.quantity),
+          skuSuffix: variant.skuSuffix || null,
+          regularPrice: parseFloat(variant.regularPrice),
+          salePrice: variant.salePrice ? parseFloat(variant.salePrice) : null,
+          images: existingUrls.length > 0 ? existingUrls : null
+        };
+      });
       formDataToSubmit.append("variants", JSON.stringify(variantsData));
+
+      // Add variant images files (new uploads)
+      variants.forEach((variant, idx) => {
+        const variantId = variant.id || `new-${idx}`;
+        if (variantImages[variantId]) {
+          variantImages[variantId].forEach(image => {
+            if (image instanceof File) {
+              formDataToSubmit.append(`variantImages`, image);
+            }
+          });
+        }
+      });
     }
 
     try {
@@ -731,28 +778,60 @@ const AddEditProductModal = ({
                   <PlusCircle size={20} className="rotate-45" />
                 </button>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="flex flex-col">
-                    <label className="text-gray-300 text-sm mb-1">
-                      Color<span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={variant.color}
-                      onChange={(e) =>
-                        handleVariantChange(index, "color", e.target.value)
-                      }
-                      className={`bg-gray-700 text-white rounded-lg p-2 ${
-                        validationErrors.variants?.[index]?.color
-                          ? "border-red-500"
-                          : ""
-                      }`}
-                      placeholder="Enter color"
-                    />
-                    {validationErrors.variants?.[index]?.color && (
-                      <span className="text-red-500 text-xs mt-1">
-                        {validationErrors.variants[index].color}
-                      </span>
-                    )}
+                  <div className="flex flex-col space-y-4">
+                    <div>
+                      <label className="text-gray-300 text-sm mb-1">
+                        Color<span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={variant.color}
+                        onChange={(e) =>
+                          handleVariantChange(index, "color", e.target.value)
+                        }
+                        className={`bg-gray-700 text-white rounded-lg p-2 ${
+                          validationErrors.variants?.[index]?.color
+                            ? "border-red-500"
+                            : ""
+                        }`}
+                        placeholder="Enter color"
+                      />
+                      {validationErrors.variants?.[index]?.color && (
+                        <span className="text-red-500 text-xs mt-1">
+                          {validationErrors.variants[index].color}
+                        </span>
+                      )}
+                    </div>
+                    <div>
+                      <label className="text-gray-300 text-sm mb-1">Variant Images</label>
+                      <input
+                        type="file"
+                        multiple
+                        accept="image/*"
+                        onChange={(e) => handleVariantImageChange(variant.id || `new-${index}`, e)}
+                        className="bg-gray-700 text-white rounded-lg p-2 w-full"
+                      />
+                      {variantImages[variant.id || `new-${index}`] && (
+                        <div className="mt-2 grid grid-cols-4 gap-2">
+                          {variantImages[variant.id || `new-${index}`].map((image, imgIndex) => (
+                            <div key={imgIndex} className="relative w-20 h-20 group">
+                              <img
+                                src={image instanceof File ? URL.createObjectURL(image) : image}
+                                alt={`Variant ${index + 1} Image ${imgIndex + 1}`}
+                                className="w-full h-full object-cover rounded-md"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveVariantImage(variant.id || `new-${index}`, imgIndex)}
+                                className="absolute top-0 right-0 bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                              >
+                                X
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
                   <div className="flex flex-col">
                     <label className="text-gray-300 text-sm mb-1">
