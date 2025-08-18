@@ -71,48 +71,7 @@ export const Sidebar = ({ activeView, setActiveView, currentUser, isOpen, setIsO
   );
 };
 
-export const GlobalHeader = ({ title, unreadNotificationsCount,notifications, onNotificationsClick, currentUser, isOpen, setIsOpen, onMenuClick, logout }) => {
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
-  const [notificationError, setNotificationError] = useState(null);
-  const [notificationLoading, setNotificationLoading] = useState(false);
-  const [notificationCount, setNotificationCount] = useState(0);
-  const [notificationUnreadCount, setNotificationUnreadCount] = useState(0);
-  const [notificationMarkAllAsReadLoading, setNotificationMarkAllAsReadLoading] = useState(false);
-  const [notificationMarkAllAsReadError, setNotificationMarkAllAsReadError] = useState(null);
-  const [notificationMarkAllAsReadSuccess, setNotificationMarkAllAsReadSuccess] = useState(null);
-
-  useEffect(() => {
-    setNotificationCount(notifications?.length || 0);
-    setNotificationUnreadCount(notifications?.filter(n => !n.isRead)?.length || 0);
-  }, [notifications]);
-
-  const handleMarkAllAsRead = async () => {
-    try {
-      setNotificationMarkAllAsReadLoading(true);
-      setNotificationMarkAllAsReadError(null);
-      setNotificationMarkAllAsReadSuccess(null);
-      await apiClient.patch('/api/notifications/allread');
-      setNotifications(prev =>
-        prev.map(n => ({ ...n, isRead: true }))
-      );
-      setNotificationMarkAllAsReadSuccess('All notifications marked as read');
-    } catch (err) {
-      setNotificationMarkAllAsReadError('Error marking all notifications as read');
-      console.error('Error marking all notifications as read:', err);
-    } finally {
-      setNotificationMarkAllAsReadLoading(false);
-    }
-  };
-
-
-  
-
-
-
-
-
-
+export const GlobalHeader = ({ title, unreadNotificationsCount, onNotificationsClick, currentUser, isOpen, setIsOpen, onMenuClick, logout }) => {
   const handleMenuClick = () => {
     setIsOpen(!isOpen);
   };
