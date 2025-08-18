@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { 
   BarChart2, Package, ShoppingCart, Layers, List, Bell, 
   Users, Settings, LogOut, Menu, Search, ChevronDown, 
-  Info
+  Info,
+  PackageCheck
 } from 'lucide-react';
 import { PERMISSIONS } from '../constants';
 
@@ -71,16 +72,32 @@ export const Sidebar = ({ activeView, setActiveView, currentUser, isOpen, setIsO
   );
 };
 
-export const GlobalHeader = ({ title, unreadNotificationsCount, onNotificationsClick, currentUser, isOpen, setIsOpen, onMenuClick, logout }) => {
+export const GlobalHeader = ({ title, notifications, currentUser, isOpen, setIsOpen, logout, setActiveView }) => {
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [notificationCount, setNotificationCount] = useState(0);
+  const [notificationUnreadCount, setNotificationUnreadCount] = useState(0);
+
+  useEffect(() => {
+    setNotificationCount(notifications?.length || 0);
+    setNotificationUnreadCount(notifications?.filter(n => !n.isRead)?.length || 0);
+  }, [notifications]);
+
+  const handleNotificationClick = () => {
+    setIsNotificationsOpen(!isNotificationsOpen);
+  };
+
+  const handleViewAllNotifications = () => {
+    setActiveView('notifications');
+    setIsNotificationsOpen(false);
+  };
+
   const handleMenuClick = () => {
     setIsOpen(!isOpen);
   };
-  const handleLogout = () => {
-    logout();
-  };
-  
+
   return (
-    <header className="bg-gray-800 shadow-md p-4 flex justify-between items-center">
+    <header className="bg-gray-800 shadow-md p-4 flex justify-between items-center relative">
       <div className="flex items-center">
         <button onClick={handleMenuClick} className="lg:hidden text-gray-400 hover:text-white mr-4">
           <Menu size={24} />
@@ -96,21 +113,88 @@ export const GlobalHeader = ({ title, unreadNotificationsCount, onNotificationsC
             className="bg-gray-700 text-white placeholder-gray-400 rounded-lg py-2 pl-10 pr-4 focus:ring-2 focus:ring-indigo-500 focus:outline-none w-40 md:w-64"
           />
         </div>
-        <button onClick={onNotificationsClick} className="relative text-gray-400 hover:text-white">
-          <Bell size={24} />
-          {unreadNotificationsCount > 0 && (
-            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-              {unreadNotificationsCount}
-            </span>
+        <div className="relative">
+          <button 
+            onClick={handleNotificationClick} 
+            className="relative text-gray-400 hover:text-white focus:outline-none"
+          >
+            <Bell size={24} />
+            {notificationUnreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                {notificationUnreadCount}
+              </span>
+            )}
+          </button>
+
+          {isNotificationsOpen && (
+            <div className="absolute right-0 mt-2 w-80 bg-gray-800 rounded-lg shadow-lg py-2 z-50 border border-gray-700">
+              <div className="px-4 py-2 border-b border-gray-700 flex justify-between items-center">
+                <h3 className="text-white font-semibold">Notifications</h3>
+                <span className="text-sm text-gray-400">{notificationUnreadCount} unread</span>
+              </div>
+              <div className="max-h-96 overflow-y-auto">
+                {notifications?.slice(0, 5).map((notif) => (
+                  <div 
+                    key={notif.id} 
+                    className={`p-3 border-b border-gray-700 hover:bg-gray-700 cursor-pointer ${!notif.isRead ? 'bg-gray-700/50' : ''}`}
+                  >
+                    <div className="flex items-start space-x-3">
+                      <div className="flex-shrink-0 pt-1">
+                        {notif.selledBy === 'PHYSICAL' ? (
+                          <PackageCheck className="w-5 h-5 text-red-400" />
+                        ) : (
+                          <Bell className="w-5 h-5 text-blue-400" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className={`text-sm font-medium ${notif.isRead ? 'text-gray-300' : 'text-white'}`}>
+                          {notif.title} from {notif.selledBy}
+
+                        </p>
+                        <p className="text-xs text-gray-400 mt-1 truncate">{notif.message}</p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {new Date(notif.createdAt).toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="px-4 py-2 border-t border-gray-700">
+                <button 
+                  onClick={handleViewAllNotifications}
+                  className="w-full text-center text-sm text-indigo-400 hover:text-indigo-300 py-1"
+                >
+                  View All Notifications
+                </button>
+              </div>
+            </div>
           )}
-        </button>
-        <div className="flex items-center">
-          <img 
-            src={`https://placehold.co/40x40/7F7F7F/FFFFFF?text=${currentUser?.username?.substring(0,1).toUpperCase() || 'U'}`} 
-            alt="User Avatar" 
-            className="w-8 h-8 md:w-10 md:h-10 rounded-full" 
-          />
-          <ChevronDown size={20} className="ml-1 text-gray-400 hidden md:block" />
+        </div>
+        <div className="relative">
+          <button 
+            onClick={() => setIsDropdownOpen(!isDropdownOpen)} 
+            className="flex items-center space-x-2 focus:outline-none"
+          >
+            <img 
+              src={`https://placehold.co/40x40/7F7F7F/FFFFFF?text=${currentUser?.username?.substring(0,1).toUpperCase() || 'U'}`} 
+              alt="User Avatar" 
+              className="w-8 h-8 md:w-10 md:h-10 rounded-full" 
+            />
+            <ChevronDown size={20} className="text-gray-400 hidden md:block" />
+          </button>
+
+          {isDropdownOpen && (
+            <div className="absolute right-0 mt-2 w-48 bg-gray-800 rounded-lg shadow-lg py-2 z-50 border border-gray-700">
+              <button 
+                onClick={logout} 
+                className="w-full px-4 py-2 text-left text-gray-300 hover:bg-gray-700 hover:text-white flex items-center space-x-2"
+              >
+                <LogOut size={16} />
+                <span>Logout</span>
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </header>

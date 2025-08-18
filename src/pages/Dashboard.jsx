@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Sidebar, GlobalHeader } from "../components/Layout";
 import Overview from "../components/Overview";
-import {
-  PERMISSIONS,
-} from "../constants";
+import { PERMISSIONS } from "../constants";
 import Notifications from "../components/Notifications";
 import UsersList from "../components/UserList";
 import BarcodeScanner from "../components/BarcodeScanner";
@@ -21,84 +19,91 @@ const Dashboard = () => {
   const [activeView, setActiveView] = useState("overview");
   const [notifications, setNotifications] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
   const { user: currentUser, logout } = useAuth();
 
-    useEffect(()=>{
-      setActiveView(PERMISSIONS[currentUser.role]?.[0] || 'overview')
-    },[currentUser.role])
+  useEffect(() => {
+    setActiveView(PERMISSIONS[currentUser.role]?.[0] || "overview");
+  }, [currentUser.role]);
   const renderContent = () => {
     const userPermissions = PERMISSIONS[currentUser?.role] || [];
-    console.log("userpermissions", userPermissions)
+    console.log("userpermissions", userPermissions);
     let canAccessCurrentView = userPermissions.includes(activeView);
 
-    if (activeView === 'addProduct' && !userPermissions.includes('addProduct')) canAccessCurrentView = false;
-    else if (activeView === 'editProduct') {
-        if (!userPermissions.includes('editProduct')) {
-            canAccessCurrentView = false;
-        }
+    if (activeView === "addProduct" && !userPermissions.includes("addProduct"))
+      canAccessCurrentView = false;
+    else if (activeView === "editProduct") {
+      if (!userPermissions.includes("editProduct")) {
+        canAccessCurrentView = false;
+      }
     }
-    
-    if (currentUser.role === 'Customer' && activeView !== 'overview' ) {
-        canAccessCurrentView = false; 
+
+    if (currentUser.role === "Customer" && activeView !== "overview") {
+      canAccessCurrentView = false;
     }
 
     if (!canAccessCurrentView) {
-        return <div className="p-6 text-white text-center">
-            <ShieldAlert size={48} className="mx-auto text-red-500 mb-4"/>
-            <h2 className="text-2xl font-semibold mb-2">Access Denied</h2>
-            <p>You ({currentUser.role}) do not have permission to view the '{activeView}' page.</p>
-            <button onClick={() => setActiveView(PERMISSIONS[currentUser.role]?.[0] || 'overview')} className="mt-4 px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">Go to Your Dashboard</button>
-        </div>;
+      return (
+        <div className="p-6 text-white text-center">
+          <ShieldAlert size={48} className="mx-auto text-red-500 mb-4" />
+          <h2 className="text-2xl font-semibold mb-2">Access Denied</h2>
+          <p>
+            You ({currentUser.role}) do not have permission to view the '
+            {activeView}' page.
+          </p>
+          <button
+            onClick={() =>
+              setActiveView(PERMISSIONS[currentUser.role]?.[0] || "overview")
+            }
+            className="mt-4 px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
+          >
+            Go to Your Dashboard
+          </button>
+        </div>
+      );
     }
 
-        const fetchNotifications = async () => {
-        try {
-            const response = await apiClient.get('/api/notifications');
-            setNotifications(response.data);
-            setError(null);
-        } catch (err) {
-            setError('Failed to fetch notifications');
-            console.error('Error fetching notifications:', err);
-        } finally {
-            setLoading(false);
-        }
+    const fetchNotifications = async () => {
+      try {
+        const response = await apiClient.get("/api/notifications");
+        setNotifications(response.data);
+        setError(null);
+      } catch (err) {
+        setError("Failed to fetch notifications");
+        console.error("Error fetching notifications:", err);
+      } finally {
+        setLoading(false);
+      }
     };
 
     useEffect(() => {
-        fetchNotifications();
+      fetchNotifications();
+      // Auto-fetch every 3 minutes (180000 ms) or 5 minutes (300000 ms)
+      const interval = setInterval(fetchNotifications, 180000); // 3 minutes
+      return () => clearInterval(interval);
     }, []);
-    
-
 
     switch (activeView) {
       case "overview":
-        return (
-          <Overview/>
-        );
-        case "addProduct":
-          return <ProductsPage />
+        return <Overview />;
+      case "addProduct":
+        return <ProductsPage />;
       case "orders":
-        return (
-          <OrderListPage/> 
-        );
+        return <OrderListPage />;
       case "categories":
         return <ProductCategories />;
       case "inventory":
         return <BarcodeScanner />;
       case "sizes":
-        return <SizeManagement />
+        return <SizeManagement />;
       case "notifications":
-        return (
-          <Notifications />
-        );
+        return <Notifications />;
       case "users":
-        return (
-          <UsersList/>
-        );
+        return <UsersList />;
       case "products":
-        return (
-          <ProductManagementPage />
-        );
+        return <ProductManagementPage />;
       case "settings":
         return (
           <div className="p-6 text-white">
@@ -142,12 +147,14 @@ const Dashboard = () => {
           currentUser={currentUser}
           isOpen={isOpen}
           setIsOpen={setIsOpen}
+          logout={logout}
+          setActiveView={setActiveView}
         />
-        <main  className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-900">
+        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-900">
           {renderContent()}
         </main>
       </div>
-       <ToastContainer />
+      <ToastContainer />
     </div>
   );
 };
