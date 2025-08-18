@@ -1,4 +1,3 @@
-/* eslint-disable no-unused-vars */
 import React, { useState, useEffect } from "react";
 import { Sidebar, GlobalHeader } from "../components/Layout";
 import Overview from "../components/Overview";
@@ -16,6 +15,7 @@ import { ShieldAlert } from "lucide-react";
 import ProductsPage from "../components/WareProductUpload";
 import SizeManagement from "../components/SizeManagement";
 import { ToastContainer } from "react-toastify";
+import { apiClient } from "../config/api/api";
 
 const Dashboard = () => {
   const [activeView, setActiveView] = useState("overview");
@@ -23,19 +23,9 @@ const Dashboard = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { user: currentUser, logout } = useAuth();
 
-  const handleMarkNotificationAsRead = (id) =>
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
-    );
-
     useEffect(()=>{
       setActiveView(PERMISSIONS[currentUser.role]?.[0] || 'overview')
     },[currentUser.role])
-  const handleMarkAllAsRead = () =>
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-  const handleDeleteNotification = (id) =>
-    setNotifications((prev) => prev.filter((n) => n.id !== id));
-
   const renderContent = () => {
     const userPermissions = PERMISSIONS[currentUser?.role] || [];
     console.log("userpermissions", userPermissions)
@@ -60,6 +50,23 @@ const Dashboard = () => {
             <button onClick={() => setActiveView(PERMISSIONS[currentUser.role]?.[0] || 'overview')} className="mt-4 px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">Go to Your Dashboard</button>
         </div>;
     }
+
+        const fetchNotifications = async () => {
+        try {
+            const response = await apiClient.get('/api/notifications');
+            setNotifications(response.data);
+            setError(null);
+        } catch (err) {
+            setError('Failed to fetch notifications');
+            console.error('Error fetching notifications:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchNotifications();
+    }, []);
     
 
 
@@ -82,12 +89,7 @@ const Dashboard = () => {
         return <SizeManagement />
       case "notifications":
         return (
-          <Notifications
-            notifications={notifications}
-            onMarkAsRead={handleMarkNotificationAsRead}
-            onMarkAllAsRead={handleMarkAllAsRead}
-            onDeleteNotification={handleDeleteNotification}
-          />
+          <Notifications />
         );
       case "users":
         return (
