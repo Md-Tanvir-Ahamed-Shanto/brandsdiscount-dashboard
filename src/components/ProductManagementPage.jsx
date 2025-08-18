@@ -15,6 +15,9 @@ import {
   ChevronRight,
   Eye,
   EyeIcon,
+  EyeClosed,
+  ShowerHead,
+  CircleX,
 } from "lucide-react";
 import { apiClient, BASE_URL } from "../config/api/api";
 import { ImageWithFallback, Pagination } from "./common";
@@ -54,8 +57,7 @@ const ProductManagementPage = () => {
   const { user: currentUser } = useAuth();
   // Determine permissions based on the provided PERMISSIONS constant
   const canAddProducts = PERMISSIONS[currentUser.role]?.includes("products");
-  const canEditProducts =
-    PERMISSIONS[currentUser.role]?.includes("products");
+  const canEditProducts = PERMISSIONS[currentUser.role]?.includes("products");
 
   const fetchProducts = useCallback(async () => {
     setLoading(true);
@@ -243,6 +245,13 @@ const ProductManagementPage = () => {
         } else {
           alert("Failed to update status. Please try again.");
         }
+      } else if (actionType === "isPublished") {
+        const response = await apiClient.patch(
+          `${BASE_API_URL}/products/${productId}/toggle-ispublished`
+        );
+        if (response.status === 200) {
+          await fetchProducts(); // Re-fetch products to reflect changes
+        }
       }
     } catch (err) {
       setError(`Failed to perform bulk action: ${actionType}.`);
@@ -328,7 +337,7 @@ const ProductManagementPage = () => {
   const handleCloseAddEditModal = () => {
     setIsAddEditModalOpen(false);
     setCurrentEditingProductId(null);
-    setLoading(false)
+    setLoading(false);
   };
 
   const handleSaveProduct = async (productFormData) => {
@@ -620,7 +629,6 @@ const ProductManagementPage = () => {
                           ${product.salePrice.toFixed(2)}
                         </div>
                       )}
-                      
                     </td>
                     <td className="px-4 py-3 text-center">
                       {typeof editingQuantity[product.id] !== "undefined" &&
@@ -682,7 +690,7 @@ const ProductManagementPage = () => {
                           : product.status}
                       </span>
                     </td>
-                   
+
                     <td className="px-4 py-3">
                       {(canEditProducts ||
                         (currentUser.role === "WarehouseUploader" &&
@@ -728,7 +736,29 @@ const ProductManagementPage = () => {
                               >
                                 <DollarSign size={16} />
                               </button>
-                              <Link target="_blank" to={`${ShopUrl}/shop/product/${product.id}`}>
+
+                              <button
+                                onClick={() =>
+                                  handleQuickAction(product.id, "isPublished")
+                                }
+                                className={`p-1 ${
+                                  product.isPublished
+                                    ? "text-purple-400 hover:text-purple-300"
+                                    : "text-gray-500 hover:text-gray-300"
+                                }`}
+                                title={
+                                  product.isPublished
+                                    ? "Hide Product"
+                                    : "Show Product"
+                                }
+                              >
+                                <CircleX size={16} />
+                              </button>
+
+                              <Link
+                                target="_blank"
+                                to={`${ShopUrl}/shop/product/${product.id}`}
+                              >
                                 <EyeIcon />
                               </Link>
                             </>
