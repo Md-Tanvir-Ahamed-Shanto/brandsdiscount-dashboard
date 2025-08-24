@@ -57,9 +57,8 @@ const AddEditProductModal = ({
                 id: variant.id,
                 color: variant.color || "",
                 sizeType: variant.sizeType || "",
-                sizes: variant.sizes || "",
-                customSize: variant.customSize || "",
-                quantity: variant.stockQuantity?.toString() || "0",
+                sizes: variant.sizes || variant.customSize || "",
+                stockQuantity: variant.stockQuantity?.toString() || "0",
                 skuSuffix: variant.skuSuffix || "",
                 regularPrice: variant.regularPrice?.toString() || "0",
                 salePrice: variant.salePrice?.toString() || ""
@@ -81,7 +80,7 @@ const AddEditProductModal = ({
           itemLocation: productData.itemLocation || "",
           sizeId: productData.sizeId || "",
           sizeType: productData.sizeType || "",
-          sizes: productData.sizes || "",
+          sizes: productData.sizes || productData.customSize || "",
           categoryId: productData.category?.id || "",
           subCategoryId: productData.subCategory?.id || "",
           parentCategoryId: productData.parentCategory?.id || "",
@@ -113,12 +112,12 @@ const AddEditProductModal = ({
           sizeId: "",
           sizeType: "",
           sizes: "",
+          stockQuantity: "0",
           categoryId: "",
           subCategoryId: "",
           parentCategoryId: "",
           regularPrice: "", // Reset main product regularPrice
           salePrice: "", // Reset main product salePrice
-          stockQuantity: "", // Reset main product stockQuantity
           toggleFirstDeal: true,
           condition: "New",
           description: "",
@@ -206,11 +205,11 @@ const AddEditProductModal = ({
       if (!variant.color) variantError.color = "Color is required";
       if (!variant.sizeType) variantError.sizeType = "Size Type is required";
       if (
-        variant.quantity === "" ||
-        isNaN(parseInt(variant.quantity)) ||
-        parseInt(variant.quantity) < 0
+        variant.stockQuantity === "" ||
+        isNaN(parseInt(variant.stockQuantity)) ||
+        parseInt(variant.stockQuantity) < 0
       ) {
-        variantError.quantity = "Quantity must be a non-negative number";
+        variantError.stockQuantity = "Stock Quantity must be a non-negative number";
       }
       if (
         isNaN(parseFloat(variant.regularPrice)) ||
@@ -237,8 +236,8 @@ const AddEditProductModal = ({
       {
         color: "",
         sizeType: "",
-        customSize: "",
-        quantity: "0", // Initialize as string to match input value type
+        sizes: "",
+        stockQuantity: "0", // Initialize as string to match input value type
         skuSuffix: "",
         regularPrice: "", // Always include regular price for new variants
         salePrice: "", // Always include sale price for new variants
@@ -273,7 +272,15 @@ const AddEditProductModal = ({
 
   const handleVariantChange = (index, field, value) => {
     const newVariants = [...variants];
-    newVariants[index][field] = value;
+    if (field === 'customSize') {
+      // Store sizes in the sizes field for consistency with the backend
+      newVariants[index]['sizes'] = value;
+    } else if (field === 'quantity') {
+      // Store quantity in stockQuantity field for consistency with the backend
+      newVariants[index]['stockQuantity'] = value;
+    } else {
+      newVariants[index][field] = value;
+    }
     setVariants(newVariants);
   };
 
@@ -328,8 +335,8 @@ const AddEditProductModal = ({
           ...(variant.id && { id: variant.id }),
           color: variant.color,
           sizeType: variant.sizeType,
-          customSize: variant.customSize || null,
-          stockQuantity: parseInt(variant.quantity),
+          sizes: variant.sizes || variant.customSize || null,
+          stockQuantity: parseInt(variant.stockQuantity || variant.quantity) || 0,
           skuSuffix: variant.skuSuffix || null,
           regularPrice: parseFloat(variant.regularPrice),
           salePrice: variant.salePrice ? parseFloat(variant.salePrice) : null,
@@ -863,13 +870,13 @@ const AddEditProductModal = ({
                   </div>
                   <div className="flex flex-col">
                     <label className="text-gray-300 text-sm mb-1">
-                      Custom Size
+                      Sizes
                     </label>
                     <input
                       type="text"
-                      value={variant.customSize}
+                      value={variant.sizes || ''}
                       onChange={(e) =>
-                        handleVariantChange(index, "customSize", e.target.value)
+                        handleVariantChange(index, "sizes", e.target.value)
                       }
                       className="bg-gray-700 text-white rounded-lg p-2"
                       placeholder="Custom size (optional)"
@@ -877,24 +884,24 @@ const AddEditProductModal = ({
                   </div>
                   <div className="flex flex-col">
                     <label className="text-gray-300 text-sm mb-1">
-                      Quantity<span className="text-red-500">*</span>
+                      Stock Quantity<span className="text-red-500">*</span>
                     </label>
                     <input
                       type="number"
-                      value={variant.quantity}
+                      value={variant.stockQuantity || ''}
                       onChange={(e) =>
-                        handleVariantChange(index, "quantity", e.target.value)
+                        handleVariantChange(index, "stockQuantity", e.target.value)
                       }
                       className={`bg-gray-700 text-white rounded-lg p-2 ${
-                        validationErrors.variants?.[index]?.quantity
+                        validationErrors.variants?.[index]?.stockQuantity
                           ? "border-red-500"
                           : ""
                       }`}
                       min="0"
                     />
-                    {validationErrors.variants?.[index]?.quantity && (
+                    {validationErrors.variants?.[index]?.stockQuantity && (
                       <span className="text-red-500 text-xs mt-1">
-                        {validationErrors.variants[index].quantity}
+                        {validationErrors.variants[index].stockQuantity}
                       </span>
                     )}
                   </div>
@@ -904,7 +911,8 @@ const AddEditProductModal = ({
                     </label>
                     <input
                       type="text"
-                      value={variant.skuSuffix}
+                      value={variant.skuSuffix || ""}
+
                       onChange={(e) =>
                         handleVariantChange(index, "skuSuffix", e.target.value)
                       }
