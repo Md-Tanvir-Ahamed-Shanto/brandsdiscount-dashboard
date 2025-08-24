@@ -20,6 +20,7 @@ const AddEditProductModal = ({
     sku: "",
     images: [], // This will hold existing image objects {id, url}
     itemLocation: "",
+    notes: "", // Add notes field
     sizeId: "",
     sizeType: "",
     sizes: "",
@@ -74,27 +75,28 @@ const AddEditProductModal = ({
         setFormData({
           title: productData.title || "",
           brandName: productData.brandName || "",
-          color: productData.color || "", // Populate main product color
+          color: productData.color || "",
           sku: productData.sku || "",
-          images: productData.images || [], // Load existing images
+          images: productData.images || [],
           itemLocation: productData.itemLocation || "",
+          notes: productData.notes || "",
           sizeId: productData.sizeId || "",
           sizeType: productData.sizeType || "",
           sizes: productData.sizes || productData.customSize || "",
           categoryId: productData.category?.id || "",
           subCategoryId: productData.subCategory?.id || "",
           parentCategoryId: productData.parentCategory?.id || "",
-          regularPrice: productData.regularPrice?.toString() || "", // Populate main product regularPrice
-          salePrice: productData.salePrice?.toString() || "", // Populate main product salePrice
-          stockQuantity: productData.stockQuantity?.toString() || "", // Populate main product stockQuantity
+          regularPrice: productData.regularPrice?.toString() || "",
+          salePrice: productData.salePrice?.toString() || "",
+          stockQuantity: productData.stockQuantity?.toString() || "",
           toggleFirstDeal: productData.toggleFirstDeal ?? true,
           condition: productData.condition || "New",
           description: productData.description || "",
           status: productData.status || "Active",
-          // Populate new eBay boolean flags
           ebayOne: productData.ebayOne ?? false,
           ebayTwo: productData.ebayTwo ?? false,
           ebayThree: productData.ebayThree ?? false,
+          changeHistory: productData.changeHistory || [], // Add changeHistory
         });
       } else {
         // Reset variants and variant images
@@ -105,10 +107,11 @@ const AddEditProductModal = ({
         setFormData({
           title: "",
           brandName: "",
-          color: "", // Reset main product color
+          color: "",
           sku: "",
-          images: [], // Reset existing images
+          images: [],
           itemLocation: "",
+          notes: "",
           sizeId: "",
           sizeType: "",
           sizes: "",
@@ -116,19 +119,19 @@ const AddEditProductModal = ({
           categoryId: "",
           subCategoryId: "",
           parentCategoryId: "",
-          regularPrice: "", // Reset main product regularPrice
-          salePrice: "", // Reset main product salePrice
+          regularPrice: "",
+          salePrice: "",
           toggleFirstDeal: true,
           condition: "New",
           description: "",
           status: "Draft",
-          // Reset new eBay boolean flags
           ebayOne: false,
           ebayTwo: false,
           ebayThree: false,
+          changeHistory: [], // Add empty changeHistory for new products
         });
       }
-      setImageFiles([]); // Clear new image files
+      setImageFiles([]);
       setValidationErrors({});
     }
   }, [isOpen, productData]);
@@ -912,7 +915,6 @@ const AddEditProductModal = ({
                     <input
                       type="text"
                       value={variant.skuSuffix || ""}
-
                       onChange={(e) =>
                         handleVariantChange(index, "skuSuffix", e.target.value)
                       }
@@ -964,7 +966,78 @@ const AddEditProductModal = ({
             ))}
           </div>
 
+          {/* Product Location */}
+          <div className="col-span-1 md:col-span-2 text-white font-semibold mt-4 mb-2">
+            Product Location
+          </div>
+          <div className="col-span-1 md:col-span-2">
+            <div className="flex flex-col mb-4">
+              <label htmlFor="itemLocation" className="text-gray-300 text-sm mb-1">
+                Item Location
+              </label>
+              <input
+                type="text"
+                id="itemLocation"
+                name="itemLocation"
+                value={formData.itemLocation}
+                onChange={handleChange}
+                className="bg-gray-700 text-white rounded-lg p-2 focus:ring-indigo-500 focus:border-indigo-500 w-full"
+                placeholder="Enter the current location of this item"
+              />
+            </div>
+          </div>
+
+          {/* Notes & Location History */}
+          <div className="col-span-1 md:col-span-2 text-white font-semibold mt-4 mb-2">
+            Notes & Location History
+          </div>
+          <div className="col-span-1 md:col-span-2">
+            <div className="flex flex-col mb-4">
+              <label htmlFor="notes" className="text-gray-300 text-sm mb-1">
+                Notes
+              </label>
+              <textarea
+                id="notes"
+                name="notes"
+                value={formData.notes}
+                onChange={handleChange}
+                rows="3"
+                className="bg-gray-700 text-white rounded-lg p-2 focus:ring-indigo-500 focus:border-indigo-500 w-full"
+                placeholder="Add notes about this product"
+              ></textarea>
+            </div>
+
+            {productData?.changeHistory && productData.changeHistory.length > 0 && (
+              <div className="mt-4">
+                <h4 className="text-gray-300 text-sm font-medium mb-2">Location & Notes History</h4>
+                <div className="bg-gray-800 rounded-lg p-4 max-h-40 overflow-y-auto">
+                  {productData.changeHistory.map((change, index) => (
+                    <div key={index} className="mb-3 last:mb-0 text-sm">
+                      <div className="text-gray-400">
+                        {new Date(change.changedAt).toLocaleDateString()} {new Date(change.changedAt).toLocaleTimeString()}
+                      </div>
+                      {change.oldItemLocation !== change.newItemLocation && (
+                        <div className="text-gray-300">
+                          Location: <span className="line-through text-gray-500">{change.oldItemLocation}</span> → 
+                          <span className="text-white">{change.newItemLocation}</span>
+                        </div>
+                      )}
+                      {change.oldNotes !== change.newNotes && (
+                        <div className="text-gray-300">
+                          Notes: <span className="line-through text-gray-500">{change.oldNotes}</span> → 
+                          <span className="text-white">{change.newNotes}</span>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* Description */}
+          <div>
+
           <div className="col-span-1 md:col-span-2 text-white font-semibold mt-4 mb-2">
             Description
           </div>
@@ -1009,9 +1082,11 @@ const AddEditProductModal = ({
               </button>
             )}
           </div>
-        </form>
+                      
+          </div>
+          </form>
+        </div>
       </div>
-    </div>
   );
 };
 
