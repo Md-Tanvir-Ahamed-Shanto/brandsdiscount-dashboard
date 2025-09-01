@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ChevronDown, ChevronRight, PlusCircle, Trash2, Edit } from 'lucide-react';
 import { apiClient } from '../config/api/api';
 
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = 'https://crm.brandsdiscounts.com/api';
 
 const AUTH_TOKEN = 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Ijg1OGNhZTE2LWM1N2ItNGRhYi1iYTllLTY4YjFiODMwOWRlMCIsImlhdCI6MTc1MDUxNTk3MCwiZXhwIjoxNzUwNTE5NTcwfQ.IAwGVtT8BjZj4Od5Ipz_oND_ddGk00Ik92aQYbZCQ3k';
 
