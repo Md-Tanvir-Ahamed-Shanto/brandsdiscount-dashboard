@@ -213,9 +213,9 @@ const ProductManagementPage = () => {
     if (!confirmed) return;
 
     try {
-      const response = await apiClient.patch(
-        `${BASE_API_URL}/products/${productId}/toggle-offer`
-      );
+     const response = await apiClient.delete(
+          `${BASE_API_URL}/products/${productId}`
+        );
       if (response.status === 200) {
         alert("Product deleted successfully.");
         await fetchProducts(); // Re-fetch products to reflect changes
