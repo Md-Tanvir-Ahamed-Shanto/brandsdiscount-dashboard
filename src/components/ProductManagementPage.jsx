@@ -18,6 +18,10 @@ import {
   EyeClosed,
   ShowerHead,
   CircleX,
+  Delete,
+  DeleteIcon,
+  LucideDelete,
+  Trash2,
 } from "lucide-react";
 import { apiClient, BASE_URL } from "../config/api/api";
 import { ImageWithFallback, Pagination } from "./common";
@@ -201,6 +205,27 @@ const ProductManagementPage = () => {
       setLoading(false);
     }
   };
+  const handleDelete = async (productId) => {
+    const confirmed = window.confirm(
+      `Are you sure you want to delete product?`
+    );
+
+    if (!confirmed) return;
+
+    try {
+      const response = await apiClient.patch(
+        `${BASE_API_URL}/products/${productId}/toggle-offer`
+      );
+      if (response.status === 200) {
+        alert("Product deleted successfully.");
+        await fetchProducts(); // Re-fetch products to reflect changes
+      } else {
+        alert("Failed to delete product. Please try again.");
+      }
+    } catch (error) {
+      console.error("❌ Failed to delete product:", error);
+    }
+  };
 
   const handleQuickAction = async (productId, actionType) => {
     setLoading(true);
@@ -218,7 +243,7 @@ const ProductManagementPage = () => {
         const response = await apiClient.delete(
           `${BASE_API_URL}/products/${productId}`
         ); // AWAIT HERE
-        if (response.status === 200) {
+        if (response.status === 204) {
           await fetchProducts(); // Re-fetch products to reflect changes
         } else {
           alert("Failed to delete product. Please try again.");
@@ -761,6 +786,12 @@ const ProductManagementPage = () => {
                               >
                                 <EyeIcon />
                               </Link>
+                              <button>
+                                <Trash2
+                                  className="text-red-400 hover:text-red-300"
+                                  onClick={() => handleDelete(product.id)}
+                                />
+                              </button>
                             </>
                           )}
                         </div>
