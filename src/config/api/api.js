@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 const apiClient = axios.create({
-  baseURL:  'https://crm.brandsdiscounts.com',
+  baseURL:  'https://dashboard.brandsdiscounts.com',
   timeout: 10000,
   // headers: {
   //   'Content-Type': 'application/json',
@@ -34,7 +34,7 @@ apiClient.interceptors.response.use(
   }
 );
 
-const BASE_URL = 'https://crm.brandsdiscounts.com';
+const BASE_URL = 'https://dashboard.brandsdiscounts.com';
 
 export { apiClient, BASE_URL };
 
