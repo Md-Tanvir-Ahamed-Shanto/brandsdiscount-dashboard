@@ -189,7 +189,7 @@ export  const generateMockNotifications = (count, products, orders) => {
 export const getStatusColor = (status) => {
   if (status === 'Active') return 'bg-green-500/30 text-green-300';
   if (status === 'Hidden') return 'bg-yellow-500/30 text-yellow-300';
-  if (status === 'Draft') return 'bg-gray-500/30 text-gray-300';
+  if (status === 'Draft' || status === 'draft') return 'bg-gray-500/30 text-gray-300';
   return 'bg-red-500/30 text-red-300';
 };
 

@@ -31,7 +31,7 @@ import axios from "axios";
 import { useAuth } from "../hooks/useAuth";
 import { PERMISSIONS, PRODUCT_STATUSES } from "../constants";
 import { Link } from "react-router-dom";
-const ShopUrl = "http://localhost:3000";
+const ShopUrl = "https://brandsdiscounts.com";
 const BASE_API_URL = `${BASE_URL}/api`; // Ensure this matches your backend URL
 
 // Main Product Management Page Component
@@ -782,7 +782,7 @@ const ProductManagementPage = () => {
 
                               <Link
                                 target="_blank"
-                                to={`${ShopUrl}/shop/product/${product.id}`}
+                                to={`${ShopUrl}/shop/product/${product.title}?id=${product.id}`}
                               >
                                 <EyeIcon />
                               </Link>
