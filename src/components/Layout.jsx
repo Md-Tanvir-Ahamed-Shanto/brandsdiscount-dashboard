@@ -105,17 +105,10 @@ export const GlobalHeader = ({ title, notifications, currentUser, isOpen, setIsO
         <h2 className="text-xl md:text-2xl font-semibold text-white">{title}</h2>
       </div>
       <div className="flex items-center space-x-2 md:space-x-4">
-        <div className="relative hidden sm:block">
-          <Search size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-          <input 
-            type="text" 
-            placeholder="Search..." 
-            className="bg-gray-700 text-white placeholder-gray-400 rounded-lg py-2 pl-10 pr-4 focus:ring-2 focus:ring-indigo-500 focus:outline-none w-40 md:w-64"
-          />
-        </div>
+       
         <div className="relative">
           <button 
-            onClick={handleNotificationClick} 
+            onClick={() => setActiveView('notifications')}
             className="relative text-gray-400 hover:text-white focus:outline-none"
           >
             <Bell size={24} />
