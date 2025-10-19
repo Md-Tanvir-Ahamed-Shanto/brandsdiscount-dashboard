@@ -13,6 +13,7 @@ const AddEditProductModal = ({
 }) => {
   const [variants, setVariants] = useState([]);
   const [variantImages, setVariantImages] = useState({});
+  const [submitMessage, setSubmitMessage] = useState({ type: '', message: '' });
   const [formData, setFormData] = useState({
     title: "",
     brandName: "",
@@ -133,6 +134,7 @@ const AddEditProductModal = ({
       }
       setImageFiles([]);
       setValidationErrors({});
+      setSubmitMessage({ type: '', message: '' });
     }
   }, [isOpen, productData]);
 
@@ -362,10 +364,54 @@ const AddEditProductModal = ({
     }
 
     try {
-      await onSave(formDataToSubmit);
+      setSubmitMessage({ type: "", text: "" });
+      
+      // Call the onSave function passed from parent
+      const result = await onSave(formDataToSubmit);
+      
+      // Check if the result indicates success
+      if (result && result.success) {
+        setSubmitMessage({ 
+          type: "success", 
+          text: result.message || (productData ? "Product updated successfully!" : "Product created successfully!")
+        });
+        
+        // Close modal after a short delay to show success message
+        setTimeout(() => {
+          onClose();
+        }, 1500);
+      } else {
+        // If no result or success is false, show generic success (for backward compatibility)
+        setSubmitMessage({ 
+          type: "success", 
+          text: productData ? "Product updated successfully!" : "Product created successfully!" 
+        });
+        
+        setTimeout(() => {
+          onClose();
+        }, 1500);
+      }
+      
     } catch (error) {
       console.error("Error saving product:", error);
-      setValidationErrors({ submit: "Failed to save product. Please try again." });
+      
+      // Parse error message from different possible formats
+      let errorMessage = "An error occurred while saving the product.";
+      
+      if (error.response?.data) {
+        const errorData = error.response.data;
+        if (errorData.message) {
+          errorMessage = errorData.message;
+        } else if (errorData.errors && Array.isArray(errorData.errors)) {
+          errorMessage = errorData.errors.join(', ');
+        } else if (typeof errorData === 'string') {
+          errorMessage = errorData;
+        }
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      setSubmitMessage({ type: "error", text: errorMessage });
     }
   };
 
@@ -382,6 +428,29 @@ const AddEditProductModal = ({
             <PlusCircle size={24} className="rotate-45" />{" "}
           </button>
         </div>
+        
+        {/* Success/Error Message Display */}
+        {submitMessage.text && (
+          <div className={`mb-4 p-3 rounded-lg ${
+            submitMessage.type === 'success' 
+              ? 'bg-green-900 border border-green-500 text-green-200' 
+              : 'bg-red-900 border border-red-500 text-red-200'
+          }`}>
+            <div className="flex items-center">
+              {submitMessage.type === 'success' ? (
+                <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+              ) : (
+                <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+              )}
+              <span className="text-sm font-medium">{submitMessage.text}</span>
+            </div>
+          </div>
+        )}
+        
         <form
           onSubmit={handleSubmit}
           className="grid grid-cols-1 md:grid-cols-2 gap-4"

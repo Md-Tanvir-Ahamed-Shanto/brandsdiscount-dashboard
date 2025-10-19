@@ -41,6 +41,7 @@ const ProductManagementPage = () => {
   const [loading, setLoading] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [successMessage, setSuccessMessage] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [filters, setFilters] = useState({
     category: "",
@@ -367,43 +368,74 @@ const ProductManagementPage = () => {
 
   const handleSaveProduct = async (productFormData) => {
     setLoading(true);
+    setError(null);
+    setSuccessMessage("");
+    
     try {
       setIsLoading(true);
       const url = currentEditingProductId
         ? `${BASE_API_URL}/products/${currentEditingProductId}`
         : `${BASE_API_URL}/products`;
-      // const data = JSON.stringify(productFormData);
+      
+      let response;
       if (currentEditingProductId) {
-        const response = await apiClient.put(url, productFormData);
-        if (!response.data.success === true) {
-          const errorData = response.data.message;
-          setIsLoading(false);
-          alert(`Error updating product: ${errorData.message}`);
-          throw new Error(
-            errorData.message ||
-              `Failed to ${currentEditingProductId ? "update" : "add"} product`
-          );
-        }
-        setIsLoading(false);
+        response = await apiClient.put(url, productFormData);
       } else {
-        const response = await apiClient.post(url, productFormData);
-        if (!response.data.success === true) {
-          alert(`Error adding product: ${response.data.message}`);
-          const errorData = response.data.message;
-          setIsLoading(false);
-          throw new Error(
-            errorData.message ||
-              `Failed to ${currentEditingProductId ? "update" : "add"} product`
-          );
-        }
-        setIsLoading(false);
+        response = await apiClient.post(url, productFormData);
       }
+      
+      // Check if the response indicates success
+      if (response.data.success === false) {
+        const errorData = response.data;
+        setIsLoading(false);
+        
+        // Create a detailed error message
+        let errorMessage = errorData.message || `Failed to ${currentEditingProductId ? "update" : "add"} product`;
+        if (errorData.errors && Array.isArray(errorData.errors)) {
+          errorMessage = errorData.errors.join(', ');
+        }
+        
+        throw new Error(errorMessage);
+      }
+      
+      // Success case
       setIsLoading(false);
+      const successMsg = currentEditingProductId ? "Product updated successfully!" : "Product created successfully!";
+      setSuccessMessage(successMsg);
+      
       await fetchProducts(); // Re-fetch products to update list
       handleCloseAddEditModal();
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => {
+        setSuccessMessage("");
+      }, 3000);
+      
+      // Return success result to the modal
+      return { success: true, message: successMsg };
+      
     } catch (err) {
       console.error(`Error saving product:`, err);
-      setError(`Failed to save product: ${err.message}.`);
+      setIsLoading(false);
+      
+      // Handle different types of errors
+      let errorMessage = "Failed to save product. Please try again.";
+      
+      if (err.response?.data) {
+        const errorData = err.response.data;
+        if (errorData.message) {
+          errorMessage = errorData.message;
+        } else if (errorData.errors && Array.isArray(errorData.errors)) {
+          errorMessage = errorData.errors.join(', ');
+        }
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
+      setError(errorMessage);
+      
+      // Re-throw the error so the modal can handle it
+      throw new Error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -416,6 +448,13 @@ const ProductManagementPage = () => {
   return (
     <div className="min-h-screen bg-gray-900 text-white font-sans antialiased">
       <div className="p-4 md:p-6">
+        {/* Success Message */}
+        {successMessage && (
+          <div className="mb-4 p-4 bg-green-600 border border-green-500 rounded-lg flex items-center">
+            <CheckCircle className="mr-3 text-green-200" size={20} />
+            <span className="text-green-100">{successMessage}</span>
+          </div>
+        )}
         {/* Header and Search/Add Product */}
         <div className="mb-6 flex flex-col sm:flex-row justify-between items-center gap-4">
           <div>
