@@ -1,6 +1,7 @@
 import { PlusCircle } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { PRODUCT_STATUSES } from "../../constants"; // Assuming this path is correct
+import { getProductCategoryInfo } from "../../utils/helpers";
 
 const AddEditProductModal = ({
   isOpen,
@@ -14,6 +15,7 @@ const AddEditProductModal = ({
   const [variants, setVariants] = useState([]);
   const [variantImages, setVariantImages] = useState({});
   const [submitMessage, setSubmitMessage] = useState({ type: '', message: '' });
+  const [categoryMappingUsed, setCategoryMappingUsed] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
     brandName: "",
@@ -72,6 +74,14 @@ const AddEditProductModal = ({
           setVariants([]);
         }
 
+        // Get category information with fallback mapping
+        const categoryInfo = getProductCategoryInfo(productData);
+        
+        // Check if category mapping was used (incomplete database category info)
+        const hasIncompleteCategory = !productData.category?.id || !productData.subCategory?.id || !productData.parentCategory?.id;
+        const mappingWasUsed = hasIncompleteCategory && categoryInfo.categoryId;
+        setCategoryMappingUsed(mappingWasUsed);
+
         // Populate form for editing
         setFormData({
           title: productData.title || "",
@@ -84,9 +94,9 @@ const AddEditProductModal = ({
           sizeId: productData.sizeId || "",
           sizeType: productData.sizeType || "",
           sizes: productData.sizes || productData.customSize || "",
-          categoryId: productData.category?.id || "",
-          subCategoryId: productData.subCategory?.id || "",
-          parentCategoryId: productData.parentCategory?.id || "",
+          categoryId: categoryInfo.categoryId || productData.category?.id || "",
+          subCategoryId: categoryInfo.subCategoryId || productData.subCategory?.id || "",
+          parentCategoryId: categoryInfo.parentCategoryId || productData.parentCategory?.id || "",
           regularPrice: productData.regularPrice?.toString() || "",
           salePrice: productData.salePrice?.toString() || "",
           stockQuantity: productData.stockQuantity?.toString() || "",
@@ -103,6 +113,7 @@ const AddEditProductModal = ({
         // Reset variants and variant images
         setVariants([]);
         setVariantImages({});
+        setCategoryMappingUsed(false);
 
         // Reset form for adding
         setFormData({
@@ -640,6 +651,12 @@ const AddEditProductModal = ({
           {/* Category & Size Information (Main Product Info) */}
           <div className="col-span-1 md:col-span-2 text-white font-semibold mt-4 mb-2">
             Category & Size (Main Product Info)
+            {categoryMappingUsed && (
+              <div className="text-xs text-yellow-400 font-normal mt-1 flex items-center gap-1">
+                <span className="inline-block w-2 h-2 bg-yellow-400 rounded-full"></span>
+                Category mapped from categoryMapping.json (incomplete database info)
+              </div>
+            )}
           </div>
           <div className="flex flex-col">
             <label htmlFor="category" className="text-gray-300 text-sm mb-1">
@@ -650,10 +667,16 @@ const AddEditProductModal = ({
               name="category"
               value={
                 categories.find(
-                  (cat) =>
-                    cat.categoryId === formData.categoryId &&
-                    cat.subCategoryId === formData.subCategoryId &&
-                    cat.parentCategoryId === formData.parentCategoryId
+                  (cat) => {
+                    // First try exact match with all three IDs
+                    if (formData.subCategoryId && formData.parentCategoryId) {
+                      return cat.categoryId === formData.categoryId &&
+                             cat.subCategoryId === formData.subCategoryId &&
+                             cat.parentCategoryId === formData.parentCategoryId;
+                    }
+                    // Fallback: match by categoryId only (for incomplete hierarchy)
+                    return cat.categoryId === formData.categoryId;
+                  }
                 )?.name || ""
               }
               onChange={handleCategoryChange}

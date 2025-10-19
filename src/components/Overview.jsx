@@ -117,12 +117,12 @@ const Overview = () => {
     { title: "Sales This Week", value: `$${salesThisWeek.toFixed(2)}`, icon: DollarSign, color: "text-green-200" },
     { title: "Active Products", value: totalActiveProducts, icon: Package, color: "text-yellow-400" },
     { title: "Total Orders (All Time)", value: orders.length, icon: ShoppingCart, color: "text-blue-400" },
-    {
-      title: "Physical Store Sales (Delivered)",
-      value: `$${physicalStoreSalesTotal.toFixed(2)} (${physicalStoreSales.filter(o => o.status === 'Delivered').length} orders)`,
-      icon: Store,
-      color: "text-teal-400"
-    },
+    // {
+    //   title: "Physical Store Sales (Delivered)",
+    //   value: `$${physicalStoreSalesTotal.toFixed(2)} (${physicalStoreSales.filter(o => o.status === 'Delivered').length} orders)`,
+    //   icon: Store,
+    //   color: "text-teal-400"
+    // },
   ];
 
   const getPlatformIcon = (platformId) => {
@@ -170,7 +170,7 @@ const Overview = () => {
           </div>
         </div>
 
-        <div className="bg-gray-800 p-4 md:p-6 rounded-xl shadow-lg">
+        {/* <div className="bg-gray-800 p-4 md:p-6 rounded-xl shadow-lg">
           <h3 className="text-xl font-semibold text-white mb-4">Physical Store Sales Highlights</h3>
           <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
             {physicalStoreSales.length > 0 ? physicalStoreSales.slice(0, 10).map(order => (
@@ -191,7 +191,7 @@ const Overview = () => {
               </div>
             )) : <p className="text-gray-500">No sales from physical store yet.</p>}
           </div>
-        </div>
+        </div> */}
       </div>
     </div>
   );

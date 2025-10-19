@@ -217,3 +217,98 @@ export const filterSalesByDate = (orderList, startDate, endDate) => {
   }
  
 };
+
+// Import category mapping data
+import categoryMapping from '../../categoryMaping.json';
+
+/**
+ * Maps a category ID to its full category path using the categoryMapping.json file
+ * @param {string} categoryId - The category ID to map
+ * @returns {object|null} - Returns an object with category information or null if not found
+ */
+export const mapCategoryById = (categoryId) => {
+  if (!categoryId) return null;
+
+  // Search through all category sections
+  const allCategories = [
+    ...Object.values(categoryMapping.womens_categories).flat(),
+    ...Object.values(categoryMapping.mens_categories).flat(),
+    ...Object.values(categoryMapping.kids_categories).flat(),
+    ...categoryMapping.general_categories
+  ];
+
+  // Find the category by ID
+  const foundCategory = allCategories.find(cat => 
+    cat.website_category_id === categoryId
+  );
+
+  if (foundCategory) {
+    return {
+      id: foundCategory.website_category_id,
+      name: foundCategory.website_category_name,
+      ebayCategory: foundCategory.ebay_category,
+      // Determine the department/parent category
+      department: foundCategory.ebay_category?.department || 'General'
+    };
+  }
+
+  return null;
+};
+
+/**
+ * Gets the full category hierarchy for a product based on available category information
+ * @param {object} productData - The product data from the database
+ * @returns {object} - Returns category information with fallback mapping
+ */
+export const getProductCategoryInfo = (productData) => {
+  const result = {
+    categoryId: '',
+    subCategoryId: '',
+    parentCategoryId: '',
+    categoryName: '',
+    fullPath: ''
+  };
+
+  // If we have complete category information from the database
+  if (productData.category?.id && productData.subCategory?.id && productData.parentCategory?.id) {
+    result.categoryId = productData.category.id;
+    result.subCategoryId = productData.subCategory.id;
+    result.parentCategoryId = productData.parentCategory.id;
+    result.categoryName = `${productData.parentCategory.name} > ${productData.subCategory.name} > ${productData.category.name}`;
+    result.fullPath = result.categoryName;
+    return result;
+  }
+
+  // If we only have category ID, try to map it using categoryMapping.json
+  if (productData.category?.id || productData.categoryId) {
+    const categoryId = productData.category?.id || productData.categoryId;
+    const mappedCategory = mapCategoryById(categoryId);
+    
+    if (mappedCategory) {
+      result.categoryId = categoryId;
+      result.categoryName = mappedCategory.name;
+      result.fullPath = `${mappedCategory.department} > ${mappedCategory.name}`;
+      
+      // Try to extract parent and sub category info if available
+      if (productData.subCategory?.id) {
+        result.subCategoryId = productData.subCategory.id;
+      }
+      if (productData.parentCategory?.id) {
+        result.parentCategoryId = productData.parentCategory.id;
+      }
+      
+      return result;
+    }
+  }
+
+  // Fallback: use whatever category information is available
+  if (productData.category?.name) {
+    result.categoryName = productData.category.name;
+    result.fullPath = productData.category.name;
+    if (productData.category.id) {
+      result.categoryId = productData.category.id;
+    }
+  }
+
+  return result;
+};
