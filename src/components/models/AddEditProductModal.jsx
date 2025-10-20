@@ -16,6 +16,8 @@ const AddEditProductModal = ({
   const [variantImages, setVariantImages] = useState({});
   const [submitMessage, setSubmitMessage] = useState({ type: '', message: '' });
   const [categoryMappingUsed, setCategoryMappingUsed] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [operationProgress, setOperationProgress] = useState('');
   const [formData, setFormData] = useState({
     title: "",
     brandName: "",
@@ -307,6 +309,10 @@ const AddEditProductModal = ({
       return;
     }
 
+    if (isSubmitting) {
+      return; // Prevent multiple submissions
+    }
+
     // Create FormData object
     const formDataToSubmit = new FormData();
 
@@ -375,47 +381,129 @@ const AddEditProductModal = ({
     }
 
     try {
+      setIsSubmitting(true);
       setSubmitMessage({ type: "", text: "" });
+      setOperationProgress("Saving product...");
       
       // Call the onSave function passed from parent
       const result = await onSave(formDataToSubmit);
       
-      // Check if the result indicates success
+      // Handle eBay API response structure according to documentation
       if (result && result.success) {
+        setOperationProgress("Operation completed successfully!");
+        let successMessage = result.message || (productData ? "Product updated successfully!" : "Product created successfully!");
+        
+        // Handle warnings if present
+        if (result.warnings && Array.isArray(result.warnings) && result.warnings.length > 0) {
+          const warningsText = result.warnings.join(', ');
+          successMessage += ` Warnings: ${warningsText}`;
+        }
+        
+        // Handle eBay listing results if present
+        if (result.ebayListingResults && Array.isArray(result.ebayListingResults)) {
+          const ebayResults = result.ebayListingResults.map(ebayResult => {
+            if (ebayResult.success) {
+              return `eBay ${ebayResult.platform}: Listed successfully (ID: ${ebayResult.listingId})`;
+            } else {
+              return `eBay ${ebayResult.platform}: ${ebayResult.error || 'Failed to list'}`;
+            }
+          }).join(', ');
+          successMessage += ` eBay Results: ${ebayResults}`;
+        }
+        
         setSubmitMessage({ 
           type: "success", 
-          text: result.message || (productData ? "Product updated successfully!" : "Product created successfully!")
+          text: successMessage
         });
         
-        // Close modal after a short delay to show success message
+        setIsSubmitting(false);
+        setOperationProgress("");
+        
+        // Close modal after a longer delay if there are warnings or eBay results to read
+        const hasAdditionalInfo = (result.warnings && result.warnings.length > 0) || 
+                                 (result.ebayListingResults && result.ebayListingResults.length > 0);
+        const delay = hasAdditionalInfo ? 6000 : 2000; // Increased delays for better UX
+        
         setTimeout(() => {
           onClose();
-        }, 1500);
+        }, delay);
+      } else if (result && result.success === false) {
+        // Handle explicit failure response
+        let errorMessage = result.message || "Failed to save product.";
+        
+        // Add errors if present
+        if (result.errors && Array.isArray(result.errors) && result.errors.length > 0) {
+          errorMessage += ` Errors: ${result.errors.join(', ')}`;
+        }
+        
+        // Add eBay listing errors if present
+        if (result.ebayListingResults && Array.isArray(result.ebayListingResults)) {
+          const ebayErrors = result.ebayListingResults
+            .filter(ebayResult => !ebayResult.success)
+            .map(ebayResult => `eBay ${ebayResult.platform}: ${ebayResult.error || 'Failed to list'}`)
+            .join(', ');
+          if (ebayErrors) {
+            errorMessage += ` eBay Errors: ${ebayErrors}`;
+          }
+        }
+        
+        setSubmitMessage({ type: "error", text: errorMessage });
+        setIsSubmitting(false);
+        setOperationProgress("");
       } else {
-        // If no result or success is false, show generic success (for backward compatibility)
+        // If no result or success is undefined, show generic success (for backward compatibility)
         setSubmitMessage({ 
           type: "success", 
           text: productData ? "Product updated successfully!" : "Product created successfully!" 
         });
         
+        setIsSubmitting(false);
+        setOperationProgress("");
+        
         setTimeout(() => {
           onClose();
-        }, 1500);
+        }, 2000); // Increased delay
       }
       
     } catch (error) {
       console.error("Error saving product:", error);
+      setIsSubmitting(false);
+      setOperationProgress("");
       
       // Parse error message from different possible formats
       let errorMessage = "An error occurred while saving the product.";
       
       if (error.response?.data) {
         const errorData = error.response.data;
+        
+        // Handle eBay API response structure in error case
         if (errorData.message) {
           errorMessage = errorData.message;
-        } else if (errorData.errors && Array.isArray(errorData.errors)) {
-          errorMessage = errorData.errors.join(', ');
-        } else if (typeof errorData === 'string') {
+        }
+        
+        // Add errors array if present
+        if (errorData.errors && Array.isArray(errorData.errors) && errorData.errors.length > 0) {
+          errorMessage += ` Errors: ${errorData.errors.join(', ')}`;
+        }
+        
+        // Add warnings if present (even in error case)
+        if (errorData.warnings && Array.isArray(errorData.warnings) && errorData.warnings.length > 0) {
+          errorMessage += ` Warnings: ${errorData.warnings.join(', ')}`;
+        }
+        
+        // Add eBay listing errors if present
+        if (errorData.ebayListingResults && Array.isArray(errorData.ebayListingResults)) {
+          const ebayErrors = errorData.ebayListingResults
+            .filter(ebayResult => !ebayResult.success)
+            .map(ebayResult => `eBay ${ebayResult.platform}: ${ebayResult.error || 'Failed to list'}`)
+            .join(', ');
+          if (ebayErrors) {
+            errorMessage += ` eBay Errors: ${ebayErrors}`;
+          }
+        }
+        
+        // Fallback to string response
+        if (!errorData.message && !errorData.errors && typeof errorData === 'string') {
           errorMessage = errorData;
         }
       } else if (error.message) {
@@ -435,32 +523,16 @@ const AddEditProductModal = ({
           <h2 className="text-2xl font-bold text-white">
             {productData ? "Edit Product" : "Add New Product"}
           </h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-white">
+          <button 
+            onClick={isSubmitting ? undefined : onClose} 
+            className={`${isSubmitting ? 'text-gray-600 cursor-not-allowed' : 'text-gray-400 hover:text-white'}`}
+            disabled={isSubmitting}
+          >
             <PlusCircle size={24} className="rotate-45" />{" "}
           </button>
         </div>
         
-        {/* Success/Error Message Display */}
-        {submitMessage.text && (
-          <div className={`mb-4 p-3 rounded-lg ${
-            submitMessage.type === 'success' 
-              ? 'bg-green-900 border border-green-500 text-green-200' 
-              : 'bg-red-900 border border-red-500 text-red-200'
-          }`}>
-            <div className="flex items-center">
-              {submitMessage.type === 'success' ? (
-                <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                </svg>
-              ) : (
-                <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                </svg>
-              )}
-              <span className="text-sm font-medium">{submitMessage.text}</span>
-            </div>
-          </div>
-        )}
+        
         
         <form
           onSubmit={handleSubmit}
@@ -1155,15 +1227,16 @@ const AddEditProductModal = ({
             >
               Cancel
             </button>
-            {loading ? (
+            {isSubmitting ? (
               <button
                 type="submit"
                 disabled
-                className={`bg-gray-600 hover:bg-gray-500 text-white font-semibold px-5 py-2 rounded-lg ${
-                  loading && "cursor-not-allowed"
-                }`}
+                className="bg-gray-600 hover:bg-gray-500 text-white font-semibold px-5 py-2 rounded-lg cursor-not-allowed"
               >
-                Submitting...
+                <div className="flex items-center">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Processing...
+                </div>
               </button>
             ) : (
               <button
@@ -1177,6 +1250,44 @@ const AddEditProductModal = ({
                       
           </div>
           </form>
+          {/* Progress Indicator for Long Operations */}
+        {isSubmitting && (
+          <div className="mb-4 mt-4 p-4 bg-blue-900 border border-blue-500 rounded-lg">
+            <div className="flex items-center">
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-300 mr-3"></div>
+              <div className="flex-1">
+                <div className="text-blue-200 text-sm font-medium">
+                  {operationProgress || "Processing your request..."}
+                </div>
+                <div className="text-blue-300 text-xs mt-1">
+                  This may take several minutes for eBay listings. Please don't close this window.
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Success/Error Message Display */}
+        {submitMessage.text && (
+          <div className={`mb-4 mt-4 p-3 rounded-lg ${
+            submitMessage.type === 'success' 
+              ? 'bg-green-900 border border-green-500 text-green-200' 
+              : 'bg-red-900 border border-red-500 text-red-200'
+          }`}>
+            <div className="flex items-center">
+              {submitMessage.type === 'success' ? (
+                <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+              ) : (
+                <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+              )}
+              <span className="text-sm font-medium">{submitMessage.text}</span>
+            </div>
+          </div>
+        )}
         </div>
       </div>
   );

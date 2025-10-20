@@ -40,6 +40,8 @@ const ProductManagementPage = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
+  const [isOperationInProgress, setIsOperationInProgress] = useState(false);
+  const [operationProgress, setOperationProgress] = useState("");
   const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
@@ -292,7 +294,14 @@ const ProductManagementPage = () => {
       alert("Please select at least one product for bulk action.");
       return;
     }
+    
+    if (isOperationInProgress) {
+      return;
+    }
+    
     setLoading(true);
+    setIsOperationInProgress(true);
+    setOperationProgress(`Performing bulk action: ${actionType}...`);
     try {
       const productIdsArray = Array.from(selectedProducts);
       let payload = { productIds: productIdsArray, action: actionType };
@@ -325,8 +334,12 @@ const ProductManagementPage = () => {
       setCurrentEditingProductId(null);
     } catch (err) {
       console.error(`Error performing bulk action ${actionType}:`, err);
+      setIsOperationInProgress(false);
+      setOperationProgress("");
     } finally {
       setLoading(false);
+      setIsOperationInProgress(false);
+      setOperationProgress("");
     }
   };
 
@@ -367,7 +380,14 @@ const ProductManagementPage = () => {
   };
 
   const handleSaveProduct = async (productFormData) => {
+    // Prevent multiple submissions
+    if (isOperationInProgress) {
+      return;
+    }
+    
     setLoading(true);
+    setIsOperationInProgress(true);
+    setOperationProgress(currentEditingProductId ? "Updating product..." : "Creating product...");
     setError(null);
     setSuccessMessage("");
     
@@ -384,60 +404,139 @@ const ProductManagementPage = () => {
         response = await apiClient.post(url, productFormData);
       }
       
-      // Check if the response indicates success
-      if (response.data.success === false) {
-        const errorData = response.data;
+      // Handle eBay API response structure according to documentation
+      const responseData = response.data;
+      
+      if (responseData.success === false) {
         setIsLoading(false);
         
-        // Create a detailed error message
-        let errorMessage = errorData.message || `Failed to ${currentEditingProductId ? "update" : "add"} product`;
-        if (errorData.errors && Array.isArray(errorData.errors)) {
-          errorMessage = errorData.errors.join(', ');
+        // Create a detailed error message following eBay API structure
+        let errorMessage = responseData.message || `Failed to ${currentEditingProductId ? "update" : "add"} product`;
+        
+        // Add errors if present
+        if (responseData.errors && Array.isArray(responseData.errors) && responseData.errors.length > 0) {
+          errorMessage += ` Errors: ${responseData.errors.join(', ')}`;
+        }
+        
+        // Add eBay listing errors if present
+        if (responseData.ebayListingResults && Array.isArray(responseData.ebayListingResults)) {
+          const ebayErrors = responseData.ebayListingResults
+            .filter(ebayResult => !ebayResult.success)
+            .map(ebayResult => `eBay ${ebayResult.platform}: ${ebayResult.error || 'Failed to list'}`)
+            .join(', ');
+          if (ebayErrors) {
+            errorMessage += ` eBay Errors: ${ebayErrors}`;
+          }
         }
         
         throw new Error(errorMessage);
       }
       
-      // Success case
+      // Success case - handle comprehensive response
       setIsLoading(false);
-      const successMsg = currentEditingProductId ? "Product updated successfully!" : "Product created successfully!";
+      let successMsg = responseData.message || (currentEditingProductId ? "Product updated successfully!" : "Product created successfully!");
+      
+      // Handle warnings if present
+      if (responseData.warnings && Array.isArray(responseData.warnings) && responseData.warnings.length > 0) {
+        const warningsText = responseData.warnings.join(', ');
+        successMsg += ` Warnings: ${warningsText}`;
+      }
+      
+      // Handle eBay listing results if present
+      if (responseData.ebayListingResults && Array.isArray(responseData.ebayListingResults)) {
+        const ebayResults = responseData.ebayListingResults.map(ebayResult => {
+          if (ebayResult.success) {
+            return `eBay ${ebayResult.platform}: Listed successfully (ID: ${ebayResult.listingId})`;
+          } else {
+            return `eBay ${ebayResult.platform}: ${ebayResult.error || 'Failed to list'}`;
+          }
+        }).join(', ');
+        successMsg += ` eBay Results: ${ebayResults}`;
+      }
+      
       setSuccessMessage(successMsg);
+      setOperationProgress("Operation completed successfully!");
       
       await fetchProducts(); // Re-fetch products to update list
+      
+      // Reset operation states
+      setIsOperationInProgress(false);
+      setOperationProgress("");
+      
       handleCloseAddEditModal();
       
-      // Clear success message after 3 seconds
+      // Clear success message after longer delay if there are warnings or eBay results
+      const hasAdditionalInfo = (responseData.warnings && responseData.warnings.length > 0) || 
+                               (responseData.ebayListingResults && responseData.ebayListingResults.length > 0);
+      const delay = hasAdditionalInfo ? 5000 : 3000;
+      
       setTimeout(() => {
         setSuccessMessage("");
-      }, 3000);
+      }, delay);
       
-      // Return success result to the modal
-      return { success: true, message: successMsg };
+      // Return comprehensive result to the modal
+      return { 
+        success: true, 
+        message: responseData.message || successMsg,
+        warnings: responseData.warnings,
+        ebayListingResults: responseData.ebayListingResults,
+        data: responseData.data
+      };
       
     } catch (err) {
       console.error(`Error saving product:`, err);
       setIsLoading(false);
       
-      // Handle different types of errors
+      // Handle different types of errors following eBay API structure
       let errorMessage = "Failed to save product. Please try again.";
       
       if (err.response?.data) {
         const errorData = err.response.data;
+        
+        // Handle eBay API error response structure
         if (errorData.message) {
           errorMessage = errorData.message;
-        } else if (errorData.errors && Array.isArray(errorData.errors)) {
-          errorMessage = errorData.errors.join(', ');
+        }
+        
+        // Add errors array if present
+        if (errorData.errors && Array.isArray(errorData.errors) && errorData.errors.length > 0) {
+          errorMessage += ` Errors: ${errorData.errors.join(', ')}`;
+        }
+        
+        // Add warnings if present (even in error case)
+        if (errorData.warnings && Array.isArray(errorData.warnings) && errorData.warnings.length > 0) {
+          errorMessage += ` Warnings: ${errorData.warnings.join(', ')}`;
+        }
+        
+        // Add eBay listing errors if present
+        if (errorData.ebayListingResults && Array.isArray(errorData.ebayListingResults)) {
+          const ebayErrors = errorData.ebayListingResults
+            .filter(ebayResult => !ebayResult.success)
+            .map(ebayResult => `eBay ${ebayResult.platform}: ${ebayResult.error || 'Failed to list'}`)
+            .join(', ');
+          if (ebayErrors) {
+            errorMessage += ` eBay Errors: ${ebayErrors}`;
+          }
+        }
+        
+        // Fallback to string response
+        if (!errorData.message && !errorData.errors && typeof errorData === 'string') {
+          errorMessage = errorData;
         }
       } else if (err.message) {
         errorMessage = err.message;
       }
       
       setError(errorMessage);
+      setIsOperationInProgress(false);
+      setOperationProgress("");
       
       // Re-throw the error so the modal can handle it
       throw new Error(errorMessage);
     } finally {
       setLoading(false);
+      setIsOperationInProgress(false);
+      setOperationProgress("");
     }
   };
 
@@ -448,6 +547,23 @@ const ProductManagementPage = () => {
   return (
     <div className="min-h-screen bg-gray-900 text-white font-sans antialiased">
       <div className="p-4 md:p-6">
+        {/* Progress Indicator for Long Operations */}
+        {isOperationInProgress && (
+          <div className="mb-4 p-4 bg-blue-900 border border-blue-500 rounded-lg">
+            <div className="flex items-center">
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-300 mr-3"></div>
+              <div className="flex-1">
+                <div className="text-blue-200 text-sm font-medium">
+                  {operationProgress || "Processing your request..."}
+                </div>
+                <div className="text-blue-300 text-xs mt-1">
+                  This may take several minutes for eBay operations. Please wait...
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Success Message */}
         {successMessage && (
           <div className="mb-4 p-4 bg-green-600 border border-green-500 rounded-lg flex items-center">
@@ -481,8 +597,13 @@ const ProductManagementPage = () => {
             </div>
             {canAddProducts && (
               <button
-                onClick={handleAddProductClick}
-                className="bg-green-500 hover:bg-green-600 text-white font-semibold px-4 py-2 rounded-lg flex items-center justify-center whitespace-nowrap"
+                onClick={isOperationInProgress ? undefined : handleAddProductClick}
+                disabled={isOperationInProgress}
+                className={`${
+                  isOperationInProgress 
+                    ? 'bg-gray-600 cursor-not-allowed' 
+                    : 'bg-green-500 hover:bg-green-600'
+                } text-white font-semibold px-4 py-2 rounded-lg flex items-center justify-center whitespace-nowrap`}
               >
                 <PlusCircle size={20} className="mr-2" /> Add Product
               </button>

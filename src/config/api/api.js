@@ -3,7 +3,7 @@ import axios from 'axios';
 
 const apiClient = axios.create({
   baseURL:  'https://dashboard.brandsdiscounts.com',
-  timeout: 10000,
+  timeout: 300000, // 5 minutes for long-running operations like eBay listings
   // headers: {
   //   'Content-Type': 'application/json',
   // }
