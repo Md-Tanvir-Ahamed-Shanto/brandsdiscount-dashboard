@@ -74,10 +74,10 @@ export const USER_ROLES = ['SuperAdmin', 'Admin', 'Cashier', 'WareHouse', 'Offic
 
 
 export const PERMISSIONS = {
-  SuperAdmin: ['overview', 'products', 'orders', 'categories', 'inventory', 'notifications', 'users', 'settings', 'editProduct','update_order_status','delete_order','send_customer_email','sizes'],
-  Admin: ['overview', 'products', 'orders', 'categories', 'inventory', 'notifications', 'users', 'settings', 'editProduct','update_order_status','delete_order','send_customer_email','sizes'],
-  Cashier: ['inventory'],
-  WareHouse: ['addProduct'],
-  OfficeEmpolyee: ['products', 'categories','orders','sizes'],
+  SuperAdmin: ['overview', 'products', 'liveProducts', 'orders', 'categories', 'inventory', 'notifications', 'users', 'settings', 'editProduct','update_order_status','delete_order','send_customer_email','sizes'],
+  Admin: ['overview', 'products', 'liveProducts', 'orders', 'categories', 'inventory', 'notifications', 'users', 'settings', 'editProduct','update_order_status','delete_order','send_customer_email','sizes'],
+  Cashier: ['inventory', 'liveProducts'],
+  WareHouse: ['addProduct', 'liveProducts'],
+  OfficeEmpolyee: ['products', 'liveProducts', 'categories','orders','sizes'],
   PlatformUser: []
 };

@@ -12,6 +12,7 @@ import { useAuth } from "../hooks/useAuth";
 import { ShieldAlert } from "lucide-react";
 import ProductsPage from "../components/WareProductUpload";
 import SizeManagement from "../components/SizeManagement";
+import LiveProducts from "../components/LiveProducts";
 import { ToastContainer } from "react-toastify";
 import { apiClient } from "../config/api/api";
 
@@ -90,6 +91,8 @@ const Dashboard = () => {
         return <Overview />;
       case "addProduct":
         return <ProductsPage />;
+      case "liveProducts":
+        return <LiveProducts />;
       case "orders":
         return <OrderListPage />;
       case "categories":

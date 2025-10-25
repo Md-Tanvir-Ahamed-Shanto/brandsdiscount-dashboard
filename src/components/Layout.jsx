@@ -2,8 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { 
   BarChart2, Package, ShoppingCart, Layers, List, Bell, 
   Users, Settings, LogOut, Menu, Search, ChevronDown, 
-  Info,
-  PackageCheck
+  Info, PackageCheck, Globe
 } from 'lucide-react';
 import { PERMISSIONS } from '../constants';
 
@@ -15,6 +14,7 @@ export const Sidebar = ({ activeView, setActiveView, currentUser, isOpen, setIsO
     { name: 'Overview', icon: BarChart2, view: 'overview' },
     { name: 'Products', icon: Package, view: 'products' },
     {name: 'Add Product', icon: Layers, view: 'addProduct' },
+    { name: 'Live Products', icon: Globe, view: 'liveProducts' },
     { name: 'Orders', icon: ShoppingCart, view: 'orders' },
     { name: 'Categories', icon: Layers, view: 'categories' },
     { name: 'Inventory', icon: List, view: 'inventory' },
