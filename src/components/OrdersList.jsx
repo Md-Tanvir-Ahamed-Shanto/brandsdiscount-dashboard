@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { ORDER_STATUSES, PERMISSIONS, PLATFORMS } from "../constants";
 import { Eye, Mail, MailCheck } from "lucide-react";
 import { Modal } from "./common";
+import { toast } from "react-toastify";
 
 const OrdersList = ({ orders: initialOrders, onUpdateOrderStatus, currentUser }) => {
     const [orders, setOrders] = useState(initialOrders);
@@ -29,9 +30,36 @@ const OrdersList = ({ orders: initialOrders, onUpdateOrderStatus, currentUser })
       });
       setIsEmailModalOpen(true);
     };
-    const handleSendEmail = () => {
-      console.log(`Simulating email send to: ${emailData.to}\nSubject: ${emailData.subject}\nBody: ${emailData.body}`);
-      setIsEmailModalOpen(false);
+    const handleSendEmail = async () => {
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_URL || 'https://dashboard.brandsdiscounts.com'}/api/email/order-update`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            toEmail: emailData.to,
+            subject: emailData.subject,
+            customerName: selectedOrder.customerName,
+            orderNumber: selectedOrder.id,
+            message: emailData.body
+          }),
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+          toast.success('Email sent successfully');
+        } else {
+          toast.error(`Failed to send email: ${data.message}`);
+          console.error('Email sending failed:', data);
+        }
+      } catch (error) {
+        toast.error('Error sending email');
+        console.error('Email sending error:', error);
+      } finally {
+        setIsEmailModalOpen(false);
+      }
     };
   
     const handleSelectOrder = (orderId) => {
