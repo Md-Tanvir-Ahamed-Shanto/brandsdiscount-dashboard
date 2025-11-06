@@ -344,12 +344,17 @@ const OrderListPage = () => {
                   />
                 </th>
                 <th scope="col" className="px-6 py-3">Order ID</th>
+                <th scope="col" className="px-6 py-3">SKU</th>
                 <th scope="col" className="px-6 py-3">Customer</th>
                 <th scope="col" className="px-6 py-3">Date & Time</th>
                 <th scope="col" className="px-6 py-3">Source</th>
                 <th scope="col" className="px-6 py-3">Payment</th>
                 <th scope="col" className="px-6 py-3">Total</th>
-                <th scope="col" className="px-6 py-3">Status</th>
+                <th scope="col" className="w-full">
+                  <div className="flex flex-col items-center justify-center">
+                    <div className="text-xs font-medium text-center text-gray-300">Status</div>
+                  </div>
+                </th>
                 <th scope="col" className="px-6 py-3">Actions</th>
               </tr>
             </thead>
@@ -368,6 +373,7 @@ const OrderListPage = () => {
                     />
                   </td>
                   <td className="px-6 py-4 font-medium text-white">{order.id}</td>
+                  <td className="px-6 py-4 font-medium text-white">{order?.orderDetails?.map(detail => detail.sku).join(', ') || 'N/A'}</td>
                   <td className="px-6 py-4">{order.user?.username || 'N/A'}</td>
                   <td className="px-6 py-4">{new Date(order.createdAt).toLocaleString()}</td>
                   <td className="px-6 py-4">{PLATFORMS.find(p => p.id === order.source)?.name || 'N/A'}</td>
@@ -375,13 +381,31 @@ const OrderListPage = () => {
                   <td className="px-6 py-4 text-green-400 font-semibold">${order?.totalAmount.toFixed(2)}</td>
                   <td className="px-6 py-4">
                     {canUpdateOrderStatus ? (
-                      <select
-                        value={order.status}
-                        onChange={(e) => onUpdateOrderStatus(order.id, e.target.value)}
-                        className={`text-xs p-1 rounded focus:ring-0 border-0 appearance-none !bg-transparent ${getOrderStatusColorClasses(order.status).split(' ')[1]}`}
-                      >
-                        {ORDER_STATUSES.map(s => <option key={s} value={s} className="bg-gray-700 text-white">{s}</option>)}
-                      </select>
+                      <div className="flex flex-col space-y-1">
+                        <div className={`px-2 py-1 rounded-full text-xs font-medium text-center ${getOrderStatusColorClasses(order.status)}`}>
+                          {order.status}
+                        </div>
+                        <div className="flex flex-wrap gap-1 justify-center">
+                          {ORDER_STATUSES.filter(status => status !== order.status).map(status => (
+                            <button
+                              key={status}
+                              onClick={() => onUpdateOrderStatus(order.id, status)}
+                              className={`px-2 py-1 text-xs rounded-full font-medium transition-all duration-200 hover:scale-105 hover:shadow-lg ${
+                                status === 'Processing' ? 'bg-blue-600 hover:bg-blue-700 text-white border border-blue-500' :
+                                status === 'Shipped' ? 'bg-purple-600 hover:bg-purple-700 text-white border border-purple-500' :
+                                status === 'Delivered' ? 'bg-green-600 hover:bg-green-700 text-white border border-green-500' :
+                                status === 'Cancelled' ? 'bg-red-600 hover:bg-red-700 text-white border border-red-500' :
+                                status === 'Refunded' ? 'bg-orange-600 hover:bg-orange-700 text-white border border-orange-500' :
+                                status === 'On Hold' ? 'bg-yellow-600 hover:bg-yellow-700 text-white border border-yellow-500' :
+                                'bg-gray-600 hover:bg-gray-700 text-white border border-gray-500'
+                              }`}
+                              title={`Change to ${status}`}
+                            >
+                              → {status}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
                     ) : (
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${getOrderStatusColorClasses(order.status)}`}>
                         {order.status}
@@ -449,9 +473,8 @@ const OrderListPage = () => {
         {selectedOrder && (
           <div className="text-gray-300 space-y-3">
             <p><strong className="text-gray-100">Order ID:</strong> {selectedOrder.id}</p>
-            <p><strong className="text-gray-100">Customer:</strong> {selectedOrder.user?.name || 'N/A'} ({selectedOrder.user?.email || 'N/A'})</p>
+            <p><strong className="text-gray-100">Customer:</strong> {selectedOrder.user?.username || 'N/A'} ({selectedOrder.user?.email || 'N/A'})</p>
             <p><strong className="text-gray-100">Date:</strong> {new Date(selectedOrder.createdAt).toLocaleString()}</p>
-            <p><strong className="text-gray-100">Source:</strong> {PLATFORMS.find(p => p.id === selectedOrder.source)?.name || selectedOrder.source}</p>
             <p><strong className="text-gray-100">Fulfillment Location:</strong> {selectedOrder.fulfillmentLocation || 'N/A'}</p>
             <p><strong className="text-gray-100">Status:</strong> {selectedOrder.status}</p>
             <p><strong className="text-gray-100">Payment Status:</strong> {selectedOrder.transaction?.status || 'N/A'}</p>
