@@ -211,8 +211,9 @@ export const filterSalesByDate = (orderList, startDate, endDate) => {
   console.log("order list", orderList)
   if(orderList){
     return orderList?.filter(order => {
-      const orderDate = new Date(order.date);
-      return orderDate >= startDate && orderDate <= endDate && order.status === 'Delivered';
+      // Use createdAt field from the actual API response, fallback to date field for compatibility
+      const orderDate = new Date(order.createdAt || order.date);
+      return orderDate >= startDate && orderDate <= endDate;
     });
   }
  

@@ -16,6 +16,7 @@ import { apiClient } from "../config/api/api";
 const Overview = () => {
   // --- ALL STATE HOOKS AT THE VERY TOP ---
   const [products, setProducts] = useState([]);
+  const [totalActiveProducts, setTotalActiveProducts] = useState(0);
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -25,14 +26,20 @@ const Overview = () => {
     const fetchData = async () => {
       try {
         setLoading(true); // Indicate loading when fetch starts
-        const [productsResponse, ordersResponse] = await Promise.all([
+        const [productsResponse, ordersResponse , totalActiveProductsResponse] = await Promise.all([
           apiClient.get("/api/products"),
           apiClient.get("/api/orders"),
+          apiClient.get("/api/products/all?page=1&pageSize=1")
         ]);
 
         // Fix for products: Assuming your products API response also wraps the array in a 'data' property
         setProducts(productsResponse.data.data); // <--- CHANGE IS HERE
         setOrders(ordersResponse.data.data); // This was already corrected for orders
+        setTotalActiveProducts(totalActiveProductsResponse.data?.totalItems || 0);
+        
+        // Debug: log first few orders to verify data structure
+        console.log('First 3 orders:', ordersResponse.data.data?.slice(0, 3));
+        console.log('Total orders loaded:', ordersResponse.data.data?.length);
       } catch (err) {
         console.error("Failed to fetch data:", err);
         setError(
@@ -81,34 +88,39 @@ const Overview = () => {
 
   // Derived states that depend on fetched data, also useMemo for optimization
   const salesThisMonth = useMemo(
-    () =>
-      calculateTotalSales(filterSalesByDate(orders, startOfMonth, endOfMonth)),
+    () => {
+      const monthlyOrders = filterSalesByDate(orders, startOfMonth, endOfMonth);
+      console.log('Monthly orders count:', monthlyOrders.length, 'Total orders:', orders.length);
+      console.log('Date range:', startOfMonth, 'to', endOfMonth);
+      return calculateTotalSales(monthlyOrders);
+    },
     [orders, startOfMonth, endOfMonth]
   );
 
   const salesThisWeek = useMemo(
-    () =>
-      calculateTotalSales(filterSalesByDate(orders, startOfWeek, endOfWeek)),
+    () => {
+      const weeklyOrders = filterSalesByDate(orders, startOfWeek, endOfWeek);
+      console.log('Weekly orders count:', weeklyOrders.length);
+      console.log('Week date range:', startOfWeek, 'to', endOfWeek);
+      return calculateTotalSales(weeklyOrders);
+    },
     [orders, startOfWeek, endOfWeek]
   );
 
   const totalSalesAllTime = useMemo(
-    () => calculateTotalSales(orders.filter((o) => o.status === "Delivered")),
+    () => calculateTotalSales(orders),
     [orders]
   );
 
-  const totalActiveProducts = useMemo(
-    // Memoize this too
-    () => products?.filter((p) => p.status === "Active").length || 0,
-    [products]
-  );
 
   const recentSales = useMemo(() => {
     return [...orders]
-      .sort((a, b) => new Date(b.date) - new Date(a.date))
+      .sort((a, b) => new Date(b.createdAt || b.date) - new Date(a.createdAt || a.date))
       .slice(0, 10);
   }, [orders]);
   const physicalStoreSales = useMemo(() => {
+    // Since actual API data might not have source field, this will be empty for now
+    // You may need to add logic to determine source based on other fields
     return orders.filter((order) => order.source === "store");
   }, [orders]);
   
@@ -177,7 +189,9 @@ const Overview = () => {
   ];
 
   const getPlatformIcon = (platformId) => {
-    const platform = PLATFORMS.find((p) => p.id === platformId);
+    // Default to website if no source is provided
+    const effectivePlatformId = platformId || 'website';
+    const platform = PLATFORMS.find((p) => p.id === effectivePlatformId);
     return platform?.icon ? (
       <platform.icon size={18} className="mr-2 opacity-80" />
     ) : (
@@ -231,7 +245,7 @@ const Overview = () => {
                     <span className="text-xs text-gray-400 flex items-center">
                       {getPlatformIcon(order.source)}
                      
-                      {new Date(order.updatedAt).toLocaleDateString()}
+                      {new Date(order.createdAt || order.updatedAt).toLocaleDateString()}
                     </span>
                     <span className="text-green-400 font-semibold">
                       ${order.totalAmount.toFixed(2)}
