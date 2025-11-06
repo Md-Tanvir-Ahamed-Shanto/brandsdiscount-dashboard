@@ -63,7 +63,7 @@ const OrderListPage = () => {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
   // Initial emailData now includes 'from'
-  const [emailData, setEmailData] = useState({ from: '', to: '', subject: '', body: '' });
+  const [emailData, setEmailData] = useState({ to: '', subject: '', body: '' });
 
 
   // Permissions for actions
@@ -169,7 +169,7 @@ const OrderListPage = () => {
       await apiClient.post(`/api/orders/${selectedOrder.id}/send-email`, emailData);
       alert('Email sent successfully!');
       setIsEmailModalOpen(false);
-      setEmailData({ from: '', to: '', subject: '', body: '' }); // Clear form
+      setEmailData({ to: '', subject: '', body: '' }); // Clear form
     } catch (err) {
       console.error('Error sending email:', err);
       alert('Failed to send email: ' + (err.response?.data?.message || err.message));
@@ -210,7 +210,6 @@ const OrderListPage = () => {
     // Pre-populate 'from' with the current user's email, if available
     // Pre-populate 'to' with the order's customer email
     setEmailData({
-      from: currentUser?.email || '', // Populate 'from' with current user's email
       to: order.user?.email || '', // Assuming order.user.email is available
       subject: `Regarding your order #${order.id}`,
       body: `Dear ${order.user?.name || 'Customer'},\n\n`,
@@ -474,16 +473,6 @@ const OrderListPage = () => {
       <Modal isOpen={isEmailModalOpen} onClose={() => setIsEmailModalOpen(false)} title={`Email Customer for Order ${selectedOrder?.id}`} size="xl">
         <div className="space-y-4 text-gray-300">
           {/* Editable From field */}
-          <div>
-            <label className="block text-sm">From:</label>
-            <input
-              type="email"
-              value={emailData.from}
-              onChange={e => setEmailData({ ...emailData, from: e.target.value })}
-              className="mt-1 w-full bg-gray-700 p-2 rounded border-gray-600 focus:outline-none focus:border-indigo-500"
-              placeholder="Your email address"
-            />
-          </div>
           <div>
             <label className="block text-sm">To:</label>
             <input
