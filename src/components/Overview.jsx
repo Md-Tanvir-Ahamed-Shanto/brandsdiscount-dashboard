@@ -1,9 +1,17 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import React, { useState, useEffect, useMemo } from 'react';
-import { BarChart2, DollarSign, Package, ShoppingCart, Store, Globe, ExternalLink } from 'lucide-react';
-import { PLATFORMS } from '../constants';
-import { calculateTotalSales, filterSalesByDate } from '../utils/helpers';
-import { apiClient } from '../config/api/api';
+import React, { useState, useEffect, useMemo } from "react";
+import {
+  BarChart2,
+  DollarSign,
+  Package,
+  ShoppingCart,
+  Store,
+  Globe,
+  ExternalLink,
+} from "lucide-react";
+import { PLATFORMS } from "../constants";
+import { calculateTotalSales, filterSalesByDate } from "../utils/helpers";
+import { apiClient } from "../config/api/api";
 
 const Overview = () => {
   // --- ALL STATE HOOKS AT THE VERY TOP ---
@@ -18,17 +26,19 @@ const Overview = () => {
       try {
         setLoading(true); // Indicate loading when fetch starts
         const [productsResponse, ordersResponse] = await Promise.all([
-          apiClient.get('/api/products'),
-          apiClient.get('/api/orders')
+          apiClient.get("/api/products"),
+          apiClient.get("/api/orders"),
         ]);
 
         // Fix for products: Assuming your products API response also wraps the array in a 'data' property
         setProducts(productsResponse.data.data); // <--- CHANGE IS HERE
-        setOrders(ordersResponse.data.data);   // This was already corrected for orders
-
+        setOrders(ordersResponse.data.data); // This was already corrected for orders
       } catch (err) {
         console.error("Failed to fetch data:", err);
-        setError(err.response?.data?.message || "Failed to load data. Please try again later.");
+        setError(
+          err.response?.data?.message ||
+            "Failed to load data. Please try again later."
+        );
       } finally {
         setLoading(false); // Stop loading regardless of success or failure
       }
@@ -53,7 +63,11 @@ const Overview = () => {
   const diffToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
 
   const startOfWeek = useMemo(() => {
-    const date = new Date(now.getFullYear(), now.getMonth(), now.getDate() + diffToMonday);
+    const date = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate() + diffToMonday
+    );
     date.setHours(0, 0, 0, 0);
     return date;
   }, [now.getFullYear(), now.getMonth(), now.getDate(), diffToMonday]);
@@ -67,22 +81,25 @@ const Overview = () => {
 
   // Derived states that depend on fetched data, also useMemo for optimization
   const salesThisMonth = useMemo(
-    () => calculateTotalSales(filterSalesByDate(orders, startOfMonth, endOfMonth)),
+    () =>
+      calculateTotalSales(filterSalesByDate(orders, startOfMonth, endOfMonth)),
     [orders, startOfMonth, endOfMonth]
   );
 
   const salesThisWeek = useMemo(
-    () => calculateTotalSales(filterSalesByDate(orders, startOfWeek, endOfWeek)),
+    () =>
+      calculateTotalSales(filterSalesByDate(orders, startOfWeek, endOfWeek)),
     [orders, startOfWeek, endOfWeek]
   );
 
   const totalSalesAllTime = useMemo(
-    () => calculateTotalSales(orders.filter(o => o.status === 'Delivered')),
+    () => calculateTotalSales(orders.filter((o) => o.status === "Delivered")),
     [orders]
   );
 
-  const totalActiveProducts = useMemo( // Memoize this too
-    () => products?.filter(p => p.status === 'Active').length || 0,
+  const totalActiveProducts = useMemo(
+    // Memoize this too
+    () => products?.filter((p) => p.status === "Active").length || 0,
     [products]
   );
 
@@ -91,32 +108,66 @@ const Overview = () => {
       .sort((a, b) => new Date(b.date) - new Date(a.date))
       .slice(0, 10);
   }, [orders]);
-
   const physicalStoreSales = useMemo(() => {
-    return orders.filter(order => order.source === 'store');
+    return orders.filter((order) => order.source === "store");
   }, [orders]);
-
+  
+  console.log(recentSales, physicalStoreSales);
   const physicalStoreSalesTotal = useMemo(
-    () => calculateTotalSales(physicalStoreSales.filter(o => o.status === 'Delivered')),
+    () =>
+      calculateTotalSales(
+        physicalStoreSales.filter((o) => o.status === "Delivered")
+      ),
     [physicalStoreSales]
   );
 
   // --- CONDITIONAL RENDERING AFTER ALL HOOKS ARE GUARANTEED TO BE CALLED ---
   if (loading) {
-    return <div className="p-4 md:p-6 text-white text-center">Loading overview data...</div>;
+    return (
+      <div className="p-4 md:p-6 text-white text-center">
+        Loading overview data...
+      </div>
+    );
   }
 
   if (error) {
-    return <div className="p-4 md:p-6 text-red-500 text-center">Error: {error}</div>;
+    return (
+      <div className="p-4 md:p-6 text-red-500 text-center">Error: {error}</div>
+    );
   }
 
   // --- REST OF YOUR JSX RENDER LOGIC ---
   const statsCards = [
-    { title: "Total Sales (All Time)", value: `$${totalSalesAllTime.toFixed(2)}`, icon: BarChart2, color: "text-green-400" },
-    { title: "Sales This Month", value: `$${salesThisMonth.toFixed(2)}`, icon: DollarSign, color: "text-green-300" },
-    { title: "Sales This Week", value: `$${salesThisWeek.toFixed(2)}`, icon: DollarSign, color: "text-green-200" },
-    { title: "Active Products", value: totalActiveProducts, icon: Package, color: "text-yellow-400" },
-    { title: "Total Orders (All Time)", value: orders.length, icon: ShoppingCart, color: "text-blue-400" },
+    {
+      title: "Total Sales (All Time)",
+      value: `$${totalSalesAllTime.toFixed(2)}`,
+      icon: BarChart2,
+      color: "text-green-400",
+    },
+    {
+      title: "Sales This Month",
+      value: `$${salesThisMonth.toFixed(2)}`,
+      icon: DollarSign,
+      color: "text-green-300",
+    },
+    {
+      title: "Sales This Week",
+      value: `$${salesThisWeek.toFixed(2)}`,
+      icon: DollarSign,
+      color: "text-green-200",
+    },
+    {
+      title: "Active Products",
+      value: totalActiveProducts,
+      icon: Package,
+      color: "text-yellow-400",
+    },
+    {
+      title: "Total Orders (All Time)",
+      value: orders.length,
+      icon: ShoppingCart,
+      color: "text-blue-400",
+    },
     // {
     //   title: "Physical Store Sales (Delivered)",
     //   value: `$${physicalStoreSalesTotal.toFixed(2)} (${physicalStoreSales.filter(o => o.status === 'Delivered').length} orders)`,
@@ -126,15 +177,22 @@ const Overview = () => {
   ];
 
   const getPlatformIcon = (platformId) => {
-    const platform = PLATFORMS.find(p => p.id === platformId);
-    return platform?.icon ? <platform.icon size={18} className="mr-2 opacity-80" /> : <Globe size={18} className="mr-2 opacity-80" />;
+    const platform = PLATFORMS.find((p) => p.id === platformId);
+    return platform?.icon ? (
+      <platform.icon size={18} className="mr-2 opacity-80" />
+    ) : (
+      <Globe size={18} className="mr-2 opacity-80" />
+    );
   };
 
   return (
     <div className="p-4 md:p-6 space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6">
-        {statsCards.map(stat => (
-          <div key={stat.title} className="bg-gray-800 p-6 rounded-xl shadow-lg flex items-center space-x-4 hover:shadow-indigo-500/30 transition-shadow">
+        {statsCards.map((stat) => (
+          <div
+            key={stat.title}
+            className="bg-gray-800 p-6 rounded-xl shadow-lg flex items-center space-x-4 hover:shadow-indigo-500/30 transition-shadow"
+          >
             <div className={`p-3 rounded-full bg-gray-700 ${stat.color}`}>
               <stat.icon size={28} />
             </div>
@@ -148,25 +206,42 @@ const Overview = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-gray-800 p-4 md:p-6 rounded-xl shadow-lg">
-          <h3 className="text-xl font-semibold text-white mb-4">Recent Sales by Platform</h3>
+          <h3 className="text-xl font-semibold text-white mb-4">
+            Recent Sales by Platform
+          </h3>
           <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
-            {recentSales.length > 0 ? recentSales.map(order => (
-              <div key={order.id} className="bg-gray-700 p-3 rounded-lg">
-                <div className="flex justify-between items-center text-sm">
-                  <span className="text-white font-medium">{order.id} - {order.customerName}</span>
-                  <span className={`px-2 py-0.5 rounded-full text-xs ${order.status === 'Delivered' ? 'bg-green-500/30 text-green-300' : 'bg-yellow-500/30 text-yellow-300'}`}>
-                    {order.status}
-                  </span>
+            {recentSales.length > 0 ? (
+              recentSales.map((order) => (
+                <div key={order.id} className="bg-gray-700 p-3 rounded-lg">
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-white font-medium">
+                      {order?.orderDetails?.map((item) => item.productName).join(', ')}
+                    </span>
+                    <span
+                      className={`px-2 py-0.5 rounded-full text-xs ${
+                        order.status === "Delivered"
+                          ? "bg-green-500/30 text-green-300"
+                          : "bg-yellow-500/30 text-yellow-300"
+                      }`}
+                    >
+                      {order.status}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center mt-1">
+                    <span className="text-xs text-gray-400 flex items-center">
+                      {getPlatformIcon(order.source)}
+                     
+                      {new Date(order.updatedAt).toLocaleDateString()}
+                    </span>
+                    <span className="text-green-400 font-semibold">
+                      ${order.totalAmount.toFixed(2)}
+                    </span>
+                  </div>
                 </div>
-                <div className="flex justify-between items-center mt-1">
-                  <span className="text-xs text-gray-400 flex items-center">
-                    {getPlatformIcon(order.source)}
-                    {PLATFORMS.find(p => p.id === order.source)?.name || order.source} - {new Date(order.date).toLocaleDateString()}
-                  </span>
-                  <span className="text-green-400 font-semibold">${order.totalAmount.toFixed(2)}</span>
-                </div>
-              </div>
-            )) : <p className="text-gray-500">No recent sales.</p>}
+              ))
+            ) : (
+              <p className="text-gray-500">No recent sales.</p>
+            )}
           </div>
         </div>
 
