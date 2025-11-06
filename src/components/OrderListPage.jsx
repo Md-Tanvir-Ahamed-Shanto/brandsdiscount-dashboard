@@ -11,7 +11,6 @@ const ORDER_STATUSES = [
   "Delivered",
   "Cancelled",
   "Refunded",
-  "On Hold",
 ];
 const PLATFORMS = [
   { id: "web", name: "Website" },
