@@ -67,7 +67,7 @@ export const ALL_POSSIBLE_PUBLISHING_PLATFORMS = [
   { id: "woocommerce", name: "WooCommerce" }
 ];
 
-export const PRODUCT_STATUSES = ['Active', 'Hidden', 'Draft'];
+export const PRODUCT_STATUSES = ['active', 'hidden', 'draft','publish'];
 export const ORDER_STATUSES = ["Pending", "Processing", "Shipped", "Delivered", "Cancelled", "Refunded", "On Hold"];
 export const SIZE_TYPES = ['XXS (00)', 'XS (0-2)', 'S (4-6)', 'M (8-10)', 'L (12-14)', 'XL (16-18)', 'XXL+ (20+)', 'O/S', 'Other'];
 export const USER_ROLES = ['SuperAdmin', 'Admin', 'Cashier', 'WareHouse', 'OfficeEmpolyee'];

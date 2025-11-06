@@ -695,7 +695,7 @@ const ProductManagementPage = () => {
               <EyeOff size={14} className="mr-1" /> Set Hidden
             </button>
             <button
-              onClick={() => handleBulkAction("setDraft", "Draft")}
+              onClick={() => handleBulkAction("setDraft", "draft")}
               className="bg-yellow-500 hover:bg-yellow-600 text-black px-3 py-1.5 rounded text-xs flex items-center"
             >
               <Archive size={14} className="mr-1" /> Set Draft
@@ -879,7 +879,7 @@ const ProductManagementPage = () => {
                     <td className="px-4 py-3">
                       {(canEditProducts ||
                         (currentUser.role === "WarehouseUploader" &&
-                          product.status === "Draft")) && (
+                          product.status === "draft")) && (
                         <div className="flex space-x-1 items-center">
                           <button
                             onClick={() => handleEditClick(product.id)}
