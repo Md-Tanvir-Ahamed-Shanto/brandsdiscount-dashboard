@@ -619,6 +619,23 @@ const OrderListPage = () => {
               {selectedOrder.user?.username || "N/A"} (
               {selectedOrder.user?.email || "N/A"})
             </p>
+            {selectedOrder.user?.userDetails && (
+              <div className="bg-gray-800 p-3 rounded-lg mt-2">
+                <strong className="text-gray-100 block mb-2">Shipping Address:</strong>
+                <div className="text-sm space-y-1">
+                  <p><strong>Name:</strong> {selectedOrder.user.userDetails.fullName || "N/A"}</p>
+                  <p><strong>Address:</strong> {selectedOrder.user.userDetails.addressLine1 || "N/A"}</p>
+                  {selectedOrder.user.userDetails.addressLine2 && (
+                    <p className="ml-12">{selectedOrder.user.userDetails.addressLine2}</p>
+                  )}
+                  <p><strong>City:</strong> {selectedOrder.user.userDetails.city || "N/A"}</p>
+                  <p><strong>State/Province:</strong> {selectedOrder.user.userDetails.stateProvince || "N/A"}</p>
+                  <p><strong>Postal Code:</strong> {selectedOrder.user.userDetails.postalCode || "N/A"}</p>
+                  <p><strong>Country:</strong> {selectedOrder.user.userDetails.country || "N/A"}</p>
+                  <p><strong>Phone:</strong> {selectedOrder.user.userDetails.phoneNumber || "N/A"}</p>
+                </div>
+              </div>
+            )}
             <p>
               <strong className="text-gray-100">Date:</strong>{" "}
               {new Date(selectedOrder.createdAt).toLocaleString()}
