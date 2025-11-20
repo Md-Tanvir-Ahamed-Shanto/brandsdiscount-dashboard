@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useContext, useCallback } from "react";
 import { AuthContext } from "../contexts/AuthContext"; // Adjust path as per your project
 import { apiClient } from "../config/api/api"; // Your configured Axios instance
-import { Eye, Mail, Trash2 } from "lucide-react"; // Example icons from 'lucide-react'
+import { Eye, Mail, Trash2, RefreshCw } from "lucide-react"; // Example icons from 'lucide-react'
 
 // Assume these are defined in your constants file or similar
 const ORDER_STATUSES = [
@@ -78,9 +78,13 @@ const OrderListPage = () => {
   const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
+  const [isRefundModalOpen, setIsRefundModalOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState(null);
   // Initial emailData now includes 'from'
   const [emailData, setEmailData] = useState({ to: "", subject: "", body: "" });
+  // Refund states
+  const [refundData, setRefundData] = useState({ amount: "", reason: "requested_by_customer" });
+  const [isProcessingRefund, setIsProcessingRefund] = useState(false);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -97,6 +101,7 @@ const OrderListPage = () => {
   const canUpdateOrderStatus = hasPermission("update_order_status");
   const canDeleteOrder = hasPermission("delete_order");
   const canSendEmail = hasPermission("send_customer_email"); // New permission for sending email
+  const canProcessRefund = hasPermission("process_refund"); // New permission for processing refunds
 
   // --- API Calls ---
 
@@ -226,6 +231,79 @@ const OrderListPage = () => {
         "Failed to send email: " + (err.response?.data?.message || err.message)
       );
     }
+  };
+
+  const processRefund = async () => {
+    if (!selectedOrder) return;
+    if (!canProcessRefund) {
+      alert("You do not have permission to process refunds.");
+      return;
+    }
+
+    // Validate refund data
+    if (!refundData.amount || parseFloat(refundData.amount) <= 0) {
+      alert("Please enter a valid refund amount.");
+      return;
+    }
+
+    if (parseFloat(refundData.amount) > selectedOrder.totalAmount) {
+      alert("Refund amount cannot exceed the order total.");
+      return;
+    }
+
+    setIsProcessingRefund(true);
+
+    try {
+      // Get payment intent ID from the order's transaction
+      const paymentIntentId = selectedOrder.transaction?.paymentIntentId || selectedOrder.transaction?.transactionId;
+      
+      if (!paymentIntentId) {
+        alert("No payment information found for this order.");
+        setIsProcessingRefund(false);
+        return;
+      }
+
+      // Call the refund API
+      const refundResponse = await apiClient.post('/api/stripe/refund', {
+        paymentIntentId: paymentIntentId,
+        amount: parseFloat(refundData.amount),
+        reason: refundData.reason,
+        orderId: selectedOrder.id
+      });
+
+      if (refundResponse.data.success) {
+        alert(`Refund processed successfully! Refund ID: ${refundResponse.data.refund.id}`);
+        
+        // Update the order status to refunded
+        setOrders((prevOrders) =>
+          prevOrders.map((order) =>
+            order.id === selectedOrder.id ? { ...order, status: 'Refunded' } : order
+          )
+        );
+
+        setIsRefundModalOpen(false);
+        setRefundData({ amount: "", reason: "requested_by_customer" });
+      } else {
+        alert(`Refund failed: ${refundResponse.data.message || 'Unknown error'}`);
+      }
+    } catch (err) {
+      console.error("Error processing refund:", err);
+      const errorMessage = err.response?.data?.error || 
+                          err.response?.data?.message || 
+                          "Failed to process refund.";
+      alert(`Refund failed: ${errorMessage}`);
+    } finally {
+      setIsProcessingRefund(false);
+    }
+  };
+
+  const handleOpenRefundModal = (order) => {
+    setSelectedOrder(order);
+    setRefundData({ 
+      amount: order.totalAmount.toFixed(2), 
+      reason: "requested_by_customer" 
+    });
+    setIsRefundModalOpen(true);
   };
 
   // --- Event Handlers ---
@@ -545,6 +623,15 @@ const OrderListPage = () => {
                         <Mail size={18} />
                       </button>
                     )}
+                    {canProcessRefund && order.status !== 'Refunded' && (
+                      <button
+                        onClick={() => handleOpenRefundModal(order)}
+                        className="text-orange-400 hover:text-orange-300"
+                        title="Process Refund"
+                      >
+                        <RefreshCw size={18} />
+                      </button>
+                    )}
                     {canDeleteOrder && (
                       <button
                         onClick={() => deleteOrder(order.id)}
@@ -732,8 +819,82 @@ const OrderListPage = () => {
           </div>
         </div>
       </Modal>
+
+      {/* Refund Modal */}
+      <Modal
+        isOpen={isRefundModalOpen}
+        onClose={() => setIsRefundModalOpen(false)}
+        title={`Process Refund for Order ${selectedOrder?.id}`}
+        size="md"
+      >
+        <div className="space-y-4 text-gray-300">
+          <div>
+            <label className="block text-sm font-medium mb-2">Refund Amount:</label>
+            <input
+              type="number"
+              step="0.01"
+              min="0.01"
+              max={selectedOrder?.totalAmount || 0}
+              value={refundData.amount}
+              onChange={(e) =>
+                setRefundData({ ...refundData, amount: e.target.value })
+              }
+              className="w-full bg-gray-700 p-2 rounded border border-gray-600 focus:outline-none focus:border-orange-500"
+              placeholder="Enter refund amount"
+            />
+            <p className="text-xs text-gray-400 mt-1">
+              Maximum refund amount: ${selectedOrder?.totalAmount?.toFixed(2) || '0.00'}
+            </p>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium mb-2">Refund Reason:</label>
+            <select
+              value={refundData.reason}
+              onChange={(e) =>
+                setRefundData({ ...refundData, reason: e.target.value })
+              }
+              className="w-full bg-gray-700 p-2 rounded border border-gray-600 focus:outline-none focus:border-orange-500"
+            >
+              <option value="requested_by_customer">Requested by Customer</option>
+              <option value="duplicate">Duplicate Charge</option>
+              <option value="fraudulent">Fraudulent Transaction</option>
+            </select>
+          </div>
+
+          <div className="bg-gray-800 p-3 rounded-lg">
+            <p className="text-sm text-gray-300">
+              <strong>Order Total:</strong> ${selectedOrder?.totalAmount?.toFixed(2) || '0.00'}
+            </p>
+            <p className="text-sm text-gray-300">
+              <strong>Payment Status:</strong> {selectedOrder?.transaction?.status || 'N/A'}
+            </p>
+            {selectedOrder?.transaction?.transactionId && (
+              <p className="text-sm text-gray-300">
+                <strong>Transaction ID:</strong> {selectedOrder.transaction.transactionId}
+              </p>
+            )}
+          </div>
+
+          <div className="flex justify-end space-x-3">
+            <button
+              onClick={() => setIsRefundModalOpen(false)}
+              className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded"
+              disabled={isProcessingRefund}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={processRefund}
+              className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={isProcessingRefund || !refundData.amount || parseFloat(refundData.amount) <= 0}
+            >
+              {isProcessingRefund ? 'Processing...' : 'Process Refund'}
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
-};
-
+}
 export default OrderListPage;
