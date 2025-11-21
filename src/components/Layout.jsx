@@ -21,7 +21,6 @@ export const Sidebar = ({ activeView, setActiveView, currentUser, isOpen, setIsO
     { name: 'Size Management', icon: Info, view: 'sizes' },
     { name: 'Notifications', icon: Bell, view: 'notifications' },
     { name: 'Users', icon: Users, view: 'users' },
-    { name: 'Settings', icon: Settings, view: 'settings' },
   ];
 
   const userPermissions = PERMISSIONS[currentUser.role] || [];

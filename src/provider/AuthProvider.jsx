@@ -13,25 +13,33 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     const initAuth = async () => {
       const storedToken = localStorage.getItem("token");
-      const storedUser = JSON.parse(localStorage.getItem("user")) ;
-
+      const storedUserStr = localStorage.getItem("user");
+      
       if (storedToken) {
         setToken(storedToken);
-
+        
+        if (storedUserStr) {
           try {
-            console.log("storedUser", storedUser);
+            const storedUser = JSON.parse(storedUserStr);
+            console.log("Initializing auth with stored user:", storedUser?.id);
+            
             const response = await apiClient.get(
               `/userroute/user/${storedUser?.id}`
             );
             setUser(response.data);
             setIsAuthenticated(true);
           } catch (error) {
-            console.log("Error: ", error);
+            console.log("Error validating stored user:", error);
             localStorage.removeItem("token");
+            localStorage.removeItem("user");
             setToken(null);
+            setUser(null);
             setIsAuthenticated(false);
           }
-        
+        } else {
+          console.log("Token exists but no stored user data");
+          setIsAuthenticated(true); // Still consider authenticated if token exists
+        }
       }
       setLoading(false);
     };

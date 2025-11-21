@@ -2,8 +2,7 @@
 import { Info, ShieldAlert, Trash2, UserPlus, Pencil } from "lucide-react"; // Import Pencil icon
 import { USER_ROLES } from "../constants";
 import { useState, useEffect } from "react";
-import axios from "axios";
-import { BASE_URL } from "../config/api/api";
+import { apiClient, BASE_URL } from "../config/api/api";
 import { useAuth } from "../hooks/useAuth";
 
 const UsersList = () => {
@@ -28,22 +27,30 @@ const UsersList = () => {
         const fetchUsers = async () => {
             try {
                 setLoading(true);
-                const response = await axios.get(`${BASE_URL}/userroute/users`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-                // set user without PlatformUser role
-                const filteredUsers = response.data.data.filter(user => user.role !== 'PlatformUser');
-                setUsers(filteredUsers);
+                console.log("Fetching users with token:", token ? "Present" : "Missing");
+                
+                const response = await apiClient.get('/userroute/users/without-platform-user');
+                
+                console.log("Users response:", response.data);
+                setUsers(response?.data?.users || []);
             } catch (err) {
                 console.error("Error fetching users:", err);
-                setError("Failed to fetch users.");
+                if (err.response?.status === 401) {
+                    setError("Authentication failed. Please log in again.");
+                } else {
+                    setError("Failed to fetch users.");
+                }
             } finally {
                 setLoading(false);
             }
         };
-        fetchUsers();
+        
+        if (token) {
+            fetchUsers();
+        } else {
+            setLoading(false);
+            setError("No authentication token available. Please log in.");
+        }
     }, [token]); // Depend on token to refetch if it changes
 
     const handleAddUserSubmit = async (e) => {
@@ -54,24 +61,16 @@ const UsersList = () => {
         }
 
         try {
-            const response = await axios.post(`${BASE_URL}/userroute/new`, {
+            const response = await apiClient.post('/userroute/new', {
                 username: newUserName,
                 password: newUserPassword,
                 role: newUserRole,
                 email: email
-            }, {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
             });
 
             if (response.data.success) {
                 // Refetch all users to ensure consistency
-                const updatedUsersResponse = await axios.get(`${BASE_URL}/userroute/users`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
+                const updatedUsersResponse = await apiClient.get('/userroute/users/without-platform-user');
                 setUsers(updatedUsersResponse.data.data);
 
                 setNewUserName('');
@@ -92,11 +91,7 @@ const UsersList = () => {
             return;
         }
         try {
-            await axios.delete(`${BASE_URL}/userroute/delete/${userId}`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
+            await apiClient.delete(`/userroute/delete/${userId}`);
             setUsers(users.filter(user => user.id !== userId)); // Optimistically update UI
         } catch (err) {
             console.error("Error deleting user:", err);
@@ -130,11 +125,7 @@ const UsersList = () => {
         }
 
         try {
-            const response = await axios.put(`${BASE_URL}/userroute/update/${editingUser.id}`, updatedUserData, {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
+            const response = await apiClient.put(`/userroute/update/${editingUser.id}`, updatedUserData);
 
             if (response.data.success) {
                 // Update the user in the local state
